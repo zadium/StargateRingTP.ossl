@@ -1,11 +1,11 @@
 /**
-    @name: Gate
+    @name: StarGate
     @description:
 
     @author: Zai Dium
-    @updated: "2022-08-05 13:48:52"
-    @revision: 145
-    @version: 2
+    @updated: "2022-08-16 17:17:57"
+    @revision: 157
+    @version: 2.5
     @localfile: ?defaultpath\Stargate\?@name.lsl
     @license: MIT
 
@@ -24,15 +24,14 @@ string defaultSound = "289b4a8d-5a9a-4cc3-8077-3d3e5b08bb8c";
 //string ring_start_sound = " ddb8a14d-624a-4da2-861c-8feedd9c9195"; //*
 //*
 
-integer version = 210; //*2.1
+integer version = 250; //*2.5
 
 integer glow_face = 0;
 integer ring_count = 5; //* amount of rings to rez and teleport
 float ring_total_time = 5;
 float sensor_range = 2;
 
-
-list cmd_list = [ "<--", "Refresh", "-->" ]; //* general navigation
+list menu_list = [ "<--", "Refresh", "-->" ]; //* general navigation
 
 key soundid;
 
@@ -60,7 +59,7 @@ listList(list l)
     llOwnerSay("Total = " + (string)len);
 }
 
-list getCommands(integer page)
+list getMenu(integer page)
 {
     //llOwnerSay("page " + (string)page);
     //listList(gates_name_list);
@@ -68,16 +67,16 @@ list getCommands(integer page)
     if (length >= 9)
     {
         integer x = page * 9;
-        return cmd_list + llList2List(gates_name_list, x , x + 8);
+        return menu_list + llList2List(gates_name_list, x , x + 8);
     }
     else {
-        return cmd_list + gates_name_list;
+        return menu_list + gates_name_list;
     }
 }
 
 showDialog(key toucher_id) {
     dialog_channel = -1 - (integer)("0x" + llGetSubString( (string) llGetKey(), -7, -1) );
-    llDialog(toucher_id, "Ring Gate", getCommands(cur_page), dialog_channel);
+    llDialog(toucher_id, "Ring Gate", getMenu(cur_page), dialog_channel);
     llListenRemove(dialog_listen_id);
     dialog_listen_id = llListen(dialog_channel, "", toucher_id, "");
 }
@@ -193,7 +192,7 @@ clear(){
 update(){
     clear();
     update_id = llGenerateKey();
-    sendCommand("update", [update_id]);
+    sendCommand("update", [update_id, version]);
 }
 
 addGate(key id)
@@ -303,20 +302,20 @@ default
     {
         if (channel == channel_number)
         {
-            list cmdList = llParseString2List(message,[";"],[""]);
-            string cmd = llList2String(cmdList, 0);
-            cmdList = llDeleteSubList(cmdList, 0, 0);
+            list params = llParseString2List(message,[";"],[""]);
+            string cmd = llList2String(params, 0);
+            params = llDeleteSubList(params, 0, 0);
 
             //* rings
             if (cmd == "ready") { //* ring ready to teleport
                 if (dest_id)
-                    teleport(id, llList2Integer(cmdList, 0));
+                    teleport(id, llList2Integer(params, 0));
             }
             //* gates
             if (cmd == "update") {
-                if (update_id != llList2Key(cmdList, 0)){
+                if (update_id != llList2Key(params, 0)){
                     clear();
-                    update_id = llList2Key(cmdList, 0);
+                    update_id = llList2Key(params, 0);
                     sendCommand("update", [update_id, version]); //* send pong reply (ring sync)
                 }
                 addGate(id);
