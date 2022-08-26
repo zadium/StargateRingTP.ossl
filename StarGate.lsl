@@ -3,9 +3,9 @@
     @description:
 
     @author: Zai Dium
-    @updated: "2022-08-16 17:17:57"
-    @revision: 157
-    @version: 2.5
+    @updated: "2022-08-26 16:09:36"
+    @revision: 174
+    @version: 2.6
     @localfile: ?defaultpath\Stargate\?@name.lsl
     @license: MIT
 
@@ -26,6 +26,8 @@ string defaultSound = "289b4a8d-5a9a-4cc3-8077-3d3e5b08bb8c";
 
 integer version = 250; //*2.5
 
+string hyperPrefix=">";
+
 integer glow_face = 0;
 integer ring_count = 5; //* amount of rings to rez and teleport
 float ring_total_time = 5;
@@ -35,8 +37,11 @@ list menu_list = [ "<--", "Refresh", "-->" ]; //* general navigation
 
 key soundid;
 
-list gates_name_list = []; //* gate rings list
 list gates_id_list = []; //* gate rings keys list
+list gates_name_list = []; //* gate rings list
+list regions_list = []; //* hop region full url
+list regions_name_list = []; //* hop region name
+
 list avatars_list = []; //* hold temp list of avatar keys for teleporting
 key dest_id; //* selected dest object ID
 
@@ -47,6 +52,20 @@ integer cur_page; //* current menu page
 key update_id;
 
 vector old_face_color;
+
+key notecardQueryId;
+integer notecardLine;
+string notecardName = "Regions";
+
+readNotecard()
+{
+    if (llGetInventoryKey(notecardName) != NULL_KEY)
+    {
+    	notecardLine = 0;
+        regions_list = []; //Clear the memory of the previous notecard.
+        notecardQueryId = llGetNotecardLine(notecardName, notecardLine);
+    }
+}
 
 listList(list l)
 {
@@ -187,12 +206,14 @@ finish()
 clear(){
     gates_id_list = [];
     gates_name_list = [];
+	regions_name_list = [];
+	regions_list = [];
 }
 
 update(){
     clear();
-    update_id = llGenerateKey();
-    sendCommand("update", [update_id, version]);
+    readNotecard();
+    //* when finish read notecard we send to other gates
 }
 
 addGate(key id)
@@ -298,6 +319,47 @@ default
          sendCommandTo(id, "setup", []);
     }
 
+	dataserver( key queryid, string data )
+    {
+        if (queryid == notecardQueryId)
+        {
+            if (data == EOF) //Reached end of notecard (End Of File).
+            {
+            	notecardQueryId = NULL_KEY;
+                update_id = llGenerateKey();
+                sendCommand("update", [update_id, version]);
+            }
+            else
+            {
+            	string name;
+                string target;
+            	integer p = llSubStringIndex(data, "=");
+                if (p>=0) {
+                	name = llGetSubString(data, 0, p - 1);
+                    target = llGetSubString(data, p - 1, -1);
+                }
+                else //* we assume you url is without name
+                {
+                    if (llToLower(llGetSubString(data, 0, 5)) == "hop://")
+                    	data = llGetSubString(data, 6, p - 1); //* remove hop
+                    target = data;
+                    p = llSubStringIndex(data, "/");
+                    data = llGetSubString(data, p + 1, -1); //* remove domain name
+                    p = llSubStringIndex(data, "/");
+                    if (p>=0)
+                    	name = llGetSubString(data, 0, p - 1); //* remove position/coordinates
+                    else
+                    	name = data;
+                }
+                regions_list += target;
+                regions_name_list += hyperPrefix + name;
+
+                ++notecardLine;
+                notecardQueryId = llGetNotecardLine(notecardName, notecardLine); //Query the dataserver for the next notecard line.
+            }
+        }
+    }
+
     listen (integer channel, string name, key id, string message)
     {
         if (channel == channel_number)
@@ -357,7 +419,7 @@ default
             }
             else if (button_index != -1)
             {
-                dest_id = (key)llList2String(gates_id_list, button_index); //* id of destination
+                dest_id = llList2Key(gates_id_list, button_index); //* id of destination
                 llSensor("", NULL_KEY, AGENT, sensor_range, PI);
                 llSetTimerEvent(ring_total_time);
            }
