@@ -3,8 +3,8 @@
     @description:
 
     @author: Zai Dium
-    @updated: "2022-08-26 17:10:39"
-    @revision: 223
+    @updated: "2022-08-26 17:49:39"
+    @revision: 226
     @version: 2.6
     @localfile: ?defaultpath\Stargate\?@name.lsl
     @license: MIT
@@ -60,7 +60,7 @@ readNotecard()
 {
     if (llGetInventoryKey(notecardName) != NULL_KEY)
     {
-    	notecardLine = 0;
+        notecardLine = 0;
         notecardQueryId = llGetNotecardLine(notecardName, notecardLine);
     }
 }
@@ -182,12 +182,13 @@ teleport(key id, integer index)
     string region;
     key dest_id;
     if (llGetListEntryType(targets_list, dest_index) == TYPE_KEY)
-	    region = llGetRegionName();
+        region = llGetRegionName();
     else
-    	region = llList2Key(targets_list, dest_index);
-    vector dest = llList2Vector(targets_pos_list, dest_index);
-	dest = dest + <0,0,0.8>;
-    sendCommandTo(id, "teleport", [(string)(index) , region, (string)dest , "<1,1,1>", (string)agent]); //* send mesage to incoming
+        region = llList2Key(targets_list, dest_index);
+    vector dest = llList2Vector(targets_pos_list, dest_index) + <0,0,0.8>;
+    vector lookAt = llList2Vector(llGetObjectDetails(agent, [OBJECT_ROT]), 0);
+
+    sendCommandTo(id, "teleport", [(string)(index) , region, (string)dest , (string)lookAt, (string)agent]); //* send mesage to incoming
 }
 
 finish()
@@ -291,7 +292,7 @@ default
 
             start(number_detected);
             if (llGetListEntryType(targets_list, dest_index) == TYPE_KEY)
-	            sendCommandTo(llList2Key(targets_list, dest_index), "activate", []); //* send mesage to incoming
+                sendCommandTo(llList2Key(targets_list, dest_index), "activate", []); //* send mesage to incoming
             llSleep(ring_total_time / 2);
         }
         else
@@ -313,29 +314,29 @@ default
          sendCommandTo(id, "setup", []);
     }
 
-	dataserver( key queryid, string data )
+    dataserver( key queryid, string data )
     {
         if (queryid == notecardQueryId)
         {
             if (data == EOF) //Reached end of notecard (End Of File).
             {
-            	notecardQueryId = NULL_KEY;
+                notecardQueryId = NULL_KEY;
                 update_id = llGenerateKey();
                 sendCommand("update", [update_id, version]);
             }
             else
             {
-            	string name = "";
+                string name = "";
                 string domain;
                 string region;
 
                 vector pos;
 
-            	integer p = llSubStringIndex(data, "=");
+                integer p = llSubStringIndex(data, "=");
                 if (p>=0) {
-                	name = llGetSubString(data, 0, p - 1);
+                    name = llGetSubString(data, 0, p - 1);
                     data = llGetSubString(data, p - 1, -1);
-				}
+                }
 
                 if (llToLower(llGetSubString(data, 0, 5)) == "hop://")
                     data = llGetSubString(data, 6, p - 1); //* remove hop
@@ -346,38 +347,38 @@ default
                 p = llSubStringIndex(data, "/");
                 if (p>=0)
                 {
-					region = llGetSubString(data, 0, p - 1); //* remove position/coordinates
+                    region = llGetSubString(data, 0, p - 1); //* remove position/coordinates
                     data = llGetSubString(data, p + 1, - 1); //* position/coordinates
 
-                	p = llSubStringIndex(data, "/");
+                    p = llSubStringIndex(data, "/");
                     pos.x = (float)llGetSubString(data, 0, p - 1);
                     data = llGetSubString(data, p + 1, -1);
-	                if (data != "")
+                    if (data != "")
                     {
-                	    p = llSubStringIndex(data, "/");
+                        p = llSubStringIndex(data, "/");
                         pos.y = (float)llGetSubString(data, 0, p - 1);
                         data = llGetSubString(data, p + 1, -1);
-	                    if (data != "")
+                        if (data != "")
                         {
-                	        p = llSubStringIndex(data, "/");
+                            p = llSubStringIndex(data, "/");
                             if (p>=0)
-	                            pos.z = (float)llGetSubString(data, 0, p - 1);
-                        	else
-                            	pos.z = data;
+                                pos.z = (float)llGetSubString(data, 0, p - 1);
+                            else
+                                pos.z = (float)data;
                         }
                     }
                 }
                 else {
-					region = data;
+                    region = data;
                     data = "";
-                	pos = <0, 0, 0>;
+                    pos = <0, 0, 0>;
                 }
 
                 if (name == "")
-	                name = region;
+                    name = region;
 
                 if (domain != "")
-					region = domain+":"+region;
+                    region = domain+":"+region;
                 llOwnerSay("name="+ name + " region="+region+" pos="+(string)pos);
                 targets_list += region;
                 targets_pos_list += pos;
@@ -385,7 +386,7 @@ default
 
                 ++notecardLine;
                 notecardQueryId = llGetNotecardLine(notecardName, notecardLine); //Query the dataserver for the next notecard line.
-	        }
+            }
         }
     }
 
