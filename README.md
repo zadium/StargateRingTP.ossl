@@ -1,13 +1,24 @@
 ## Opensource Stargate ring teleporter ##
 
-Ground ring to teleport multiple avatars (only 5) to another position in the same region (another region in the future)[TODO]
+Ground ring to teleport multiple avatars (only 5) to another position in the same region oer another region
 
 Idea is based on idea "APN Ring Transporters (OSGrid/OpenSim) by Spectre Draconia and author: Warin Cascabel, April 2009"
 
 I rebuilt it from scratch the code and the mesh too, with better solution, I used sensor to catch avatars, rez a ring then send a message to that ring to teleport one avatar to the new position.
 
-Works only in one region but i will add cross regions by saving LM in notecard [TODO].
+Works in one region by adding multiple gates, it is auto detect it by gate names
+for cross regions, add a notecard with url of grids like
 
+    /My Region/128/64/25
+    hg.mygrid.com:8000/My Region/128/64/25
+    hop://hg.mygrid.com:8000/My Region/128/64/25
+    #hg.mygrid.com:8000/My Region/128/64/25     it commented
+
+do not use simicolone : for region links seperator
+
+	hg.mygrid.com:8000:My Region/128/64/25  wrong
+
+Some of grid do not allow hyper teleport or between regions, you can ask your admin to enabled it for you.
 
 ### Setup ###
 
@@ -35,7 +46,7 @@ The source is on github with blender files and textures.
 
 https://github.com/zaher/StargateRingTP
 
-### Syntax ###
+### Code Syntax ###
 
 I use /**  or  //*  as documentation comment, normal comment is not a documentation, my miniedit highlight it correctly.
 
