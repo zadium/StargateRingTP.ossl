@@ -3,8 +3,8 @@
     @description:
 
     @author: Zai Dium
-    @updated: "2022-08-26 16:09:36"
-    @revision: 174
+    @updated: "2022-08-26 17:10:39"
+    @revision: 223
     @version: 2.6
     @localfile: ?defaultpath\Stargate\?@name.lsl
     @license: MIT
@@ -37,13 +37,12 @@ list menu_list = [ "<--", "Refresh", "-->" ]; //* general navigation
 
 key soundid;
 
-list gates_id_list = []; //* gate rings keys list
-list gates_name_list = []; //* gate rings list
-list regions_list = []; //* hop region full url
-list regions_name_list = []; //* hop region name
+list targets_list = []; //* gate rings keys list
+list targets_pos_list = []; //* gate rings keys list
+list targets_name_list = []; //* gate rings list
 
 list avatars_list = []; //* hold temp list of avatar keys for teleporting
-key dest_id; //* selected dest object ID
+integer dest_index = -1; //* selected dest object index
 
 integer dialog_channel = -1;
 integer dialog_listen_id; //* dynamicly generated menu channel
@@ -62,7 +61,6 @@ readNotecard()
     if (llGetInventoryKey(notecardName) != NULL_KEY)
     {
     	notecardLine = 0;
-        regions_list = []; //Clear the memory of the previous notecard.
         notecardQueryId = llGetNotecardLine(notecardName, notecardLine);
     }
 }
@@ -81,15 +79,15 @@ listList(list l)
 list getMenu(integer page)
 {
     //llOwnerSay("page " + (string)page);
-    //listList(gates_name_list);
-    integer length = llGetListLength(gates_name_list);
+    //listList(targets_name_list);
+    integer length = llGetListLength(targets_name_list);
     if (length >= 9)
     {
         integer x = page * 9;
-        return menu_list + llList2List(gates_name_list, x , x + 8);
+        return menu_list + llList2List(targets_name_list, x , x + 8);
     }
     else {
-        return menu_list + gates_name_list;
+        return menu_list + targets_name_list;
     }
 }
 
@@ -180,10 +178,16 @@ teleport(key id, integer index)
 /*    if (index >= llGetListLength(avatars_list))
         llOwnerSay("out of index"); //* but we will send teleport command to make ring fall down
 */
-    key agent = llList2String(avatars_list, index - 1); //* -1 based on 0 while ring numbers is based on 1
-    vector dest = llList2Vector(llGetObjectDetails(dest_id, [OBJECT_POS]), 0);
-    dest = dest + <0,0,0.8>;
-    sendCommandTo(id, "teleport", [(string)(index) , llGetRegionName() , (string)dest , "<1,1,1>", (string)agent]); //* send mesage to incoming
+    key agent = llList2Key(avatars_list, index - 1); //* -1 based on 0 while ring numbers is based on 1
+    string region;
+    key dest_id;
+    if (llGetListEntryType(targets_list, dest_index) == TYPE_KEY)
+	    region = llGetRegionName();
+    else
+    	region = llList2Key(targets_list, dest_index);
+    vector dest = llList2Vector(targets_pos_list, dest_index);
+	dest = dest + <0,0,0.8>;
+    sendCommandTo(id, "teleport", [(string)(index) , region, (string)dest , "<1,1,1>", (string)agent]); //* send mesage to incoming
 }
 
 finish()
@@ -198,16 +202,15 @@ finish()
         llSetColor(old_face_color, glow_face);
     }
     llSetPrimitiveParams([PRIM_GLOW, glow_face, 0.00, PRIM_FULLBRIGHT, glow_face, FALSE]); //* deactivate glow
-    dest_id = NULL_KEY;
+    dest_index = -1;
     //avatars_list = []; nop
     started = FALSE;
 }
 
 clear(){
-    gates_id_list = [];
-    gates_name_list = [];
-	regions_name_list = [];
-	regions_list = [];
+    targets_list = [];
+    targets_pos_list = [];
+    targets_name_list = [];
 }
 
 update(){
@@ -218,41 +221,24 @@ update(){
 
 addGate(key id)
 {
-    if (llListFindList(gates_id_list,[id]) == -1)
+    if (llListFindList(targets_list,[id]) == -1)
     {
-        gates_id_list += id; //* add ring to list
+        targets_list += id; //* add ring to list
+        targets_pos_list +=llList2Vector(llGetObjectDetails(id, [OBJECT_POS]), 0);
+
         string name = llList2String(llGetObjectDetails(id,[OBJECT_DESC]), 0);
         if (name == "")
             name = llList2String(llGetObjectDetails(id,[OBJECT_NAME]), 0);
         if (name == "")
             llOwnerSay("This id have no name: " + (string)id);
         //llOwnerSay("add: " + name);
-        gates_name_list += name;
-    }
-}
 
-removeGate(key id){
-    if (llListFindList(gates_id_list,[ id ]) == -1)
-    {
-        list tempList;
-        integer index = llListFindList(gates_id_list,[id]);
-        if (index != -1)
-        {
-            tempList = llDeleteSubList(gates_id_list,index,index);
-        }
-        gates_id_list = tempList;
+        targets_name_list += name;
     }
 }
 
 default
 {
-    changed (integer change)
-    {
-        if ((change & CHANGED_REGION_START) || (change & CHANGED_OWNER)) {
-            llResetScript();
-        }
-    }
-
     state_entry()
     {
         old_face_color = llGetColor(glow_face);
@@ -280,6 +266,13 @@ default
         llResetScript();
     }
 
+    changed (integer change)
+    {
+        if ((change & CHANGED_REGION_START) || (change & CHANGED_OWNER)) {
+            llResetScript();
+        }
+    }
+
     touch_start(integer num_detected)
     {
         showDialog(llDetectedKey(0));
@@ -297,7 +290,8 @@ default
             }
 
             start(number_detected);
-            sendCommandTo(dest_id, "activate", []); //* send mesage to incoming
+            if (llGetListEntryType(targets_list, dest_index) == TYPE_KEY)
+	            sendCommandTo(llList2Key(targets_list, dest_index), "activate", []); //* send mesage to incoming
             llSleep(ring_total_time / 2);
         }
         else
@@ -331,32 +325,67 @@ default
             }
             else
             {
-            	string name;
-                string target;
+            	string name = "";
+                string domain;
+                string region;
+
+                vector pos;
+
             	integer p = llSubStringIndex(data, "=");
                 if (p>=0) {
                 	name = llGetSubString(data, 0, p - 1);
-                    target = llGetSubString(data, p - 1, -1);
-                }
-                else //* we assume you url is without name
+                    data = llGetSubString(data, p - 1, -1);
+				}
+
+                if (llToLower(llGetSubString(data, 0, 5)) == "hop://")
+                    data = llGetSubString(data, 6, p - 1); //* remove hop
+
+                p = llSubStringIndex(data, "/");
+                domain = llGetSubString(data, 0, p - 1); //* domain name
+                data = llGetSubString(data, p + 1, -1); //* remove domain name
+                p = llSubStringIndex(data, "/");
+                if (p>=0)
                 {
-                    if (llToLower(llGetSubString(data, 0, 5)) == "hop://")
-                    	data = llGetSubString(data, 6, p - 1); //* remove hop
-                    target = data;
-                    p = llSubStringIndex(data, "/");
-                    data = llGetSubString(data, p + 1, -1); //* remove domain name
-                    p = llSubStringIndex(data, "/");
-                    if (p>=0)
-                    	name = llGetSubString(data, 0, p - 1); //* remove position/coordinates
-                    else
-                    	name = data;
+					region = llGetSubString(data, 0, p - 1); //* remove position/coordinates
+                    data = llGetSubString(data, p + 1, - 1); //* position/coordinates
+
+                	p = llSubStringIndex(data, "/");
+                    pos.x = (float)llGetSubString(data, 0, p - 1);
+                    data = llGetSubString(data, p + 1, -1);
+	                if (data != "")
+                    {
+                	    p = llSubStringIndex(data, "/");
+                        pos.y = (float)llGetSubString(data, 0, p - 1);
+                        data = llGetSubString(data, p + 1, -1);
+	                    if (data != "")
+                        {
+                	        p = llSubStringIndex(data, "/");
+                            if (p>=0)
+	                            pos.z = (float)llGetSubString(data, 0, p - 1);
+                        	else
+                            	pos.z = data;
+                        }
+                    }
                 }
-                regions_list += target;
-                regions_name_list += hyperPrefix + name;
+                else {
+					region = data;
+                    data = "";
+                	pos = <0, 0, 0>;
+                }
+
+                if (name == "")
+	                name = region;
+
+                if (domain != "")
+					region = domain+":"+region;
+                llOwnerSay("name="+ name + " region="+region+" pos="+(string)pos);
+                targets_list += region;
+                targets_pos_list += pos;
+                targets_name_list += hyperPrefix + name;
 
                 ++notecardLine;
                 notecardQueryId = llGetNotecardLine(notecardName, notecardLine); //Query the dataserver for the next notecard line.
-            }
+	        }
         }
     }
 
@@ -370,7 +399,7 @@ default
 
             //* rings
             if (cmd == "ready") { //* ring ready to teleport
-                if (dest_id)
+                if (dest_index>=0)
                     teleport(id, llList2Integer(params, 0));
             }
             //* gates
@@ -382,15 +411,11 @@ default
                 }
                 addGate(id);
             }
-            else if (message == "remove")
-            {
-                removeGate(id);
-            }
             else if (cmd == "activate")
             {
                 if (id != llGetKey())
                 { //*not self s
-                    dest_id = NULL_KEY;
+                    dest_index = -1;
                     start(0);
                 }
             }
@@ -398,7 +423,7 @@ default
         else if (channel == dialog_channel) //* Dialog
         {
             llListenRemove(dialog_listen_id);
-            integer button_index = llListFindList(gates_name_list, [message]);
+            integer button_index = llListFindList(targets_name_list, [message]);
 
             if (message == "<--")
             {
@@ -408,7 +433,7 @@ default
             }
             else if (message == "-->")
             {
-                integer max_limit = llGetListLength(gates_name_list) / 9;
+                integer max_limit = llGetListLength(targets_name_list) / 9;
                 if (max_limit >= 1 && cur_page <= max_limit)
                     cur_page += 1;
                 showDialog(id);
@@ -419,7 +444,7 @@ default
             }
             else if (button_index != -1)
             {
-                dest_id = llList2Key(gates_id_list, button_index); //* id of destination
+                dest_index = button_index;
                 llSensor("", NULL_KEY, AGENT, sensor_range, PI);
                 llSetTimerEvent(ring_total_time);
            }
