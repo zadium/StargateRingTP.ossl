@@ -1,10 +1,10 @@
 /**
-    @name: StarGate
+    @name: StarGate 
     @description:
 
     @author: Zai Dium
-    @updated: "2022-08-26 17:49:39"
-    @revision: 226
+    @updated: "2022-08-26 19:42:25"
+    @revision: 245
     @version: 2.6
     @localfile: ?defaultpath\Stargate\?@name.lsl
     @license: MIT
@@ -182,7 +182,7 @@ teleport(key id, integer index)
     string region;
     key dest_id;
     if (llGetListEntryType(targets_list, dest_index) == TYPE_KEY)
-        region = llGetRegionName();
+        region = "";//llGetRegionName();
     else
         region = llList2Key(targets_list, dest_index);
     vector dest = llList2Vector(targets_pos_list, dest_index) + <0,0,0.8>;
@@ -232,7 +232,6 @@ addGate(key id)
             name = llList2String(llGetObjectDetails(id,[OBJECT_NAME]), 0);
         if (name == "")
             llOwnerSay("This id have no name: " + (string)id);
-        //llOwnerSay("add: " + name);
 
         targets_name_list += name;
     }
@@ -326,64 +325,74 @@ default
             }
             else
             {
-                string name = "";
-                string domain;
-                string region;
-
-                vector pos;
-
-                integer p = llSubStringIndex(data, "=");
-                if (p>=0) {
-                    name = llGetSubString(data, 0, p - 1);
-                    data = llGetSubString(data, p - 1, -1);
-                }
-
-                if (llToLower(llGetSubString(data, 0, 5)) == "hop://")
-                    data = llGetSubString(data, 6, p - 1); //* remove hop
-
-                p = llSubStringIndex(data, "/");
-                domain = llGetSubString(data, 0, p - 1); //* domain name
-                data = llGetSubString(data, p + 1, -1); //* remove domain name
-                p = llSubStringIndex(data, "/");
-                if (p>=0)
+                if (llToLower(llGetSubString(data, 0, 0)) != "#")
                 {
-                    region = llGetSubString(data, 0, p - 1); //* remove position/coordinates
-                    data = llGetSubString(data, p + 1, - 1); //* position/coordinates
+                    string name = "";
+                    string domain;
+                    string region;
+
+                    vector pos;
+
+                    integer p = llSubStringIndex(data, "=");
+                    if (p>=0) {
+                        name = llGetSubString(data, 0, p - 1);
+                        data = llGetSubString(data, p - 1, -1);
+                    }
+
+                    if (llToLower(llGetSubString(data, 0, 5)) == "hop://")
+                        data = llGetSubString(data, 6, p - 1); //* remove hop
 
                     p = llSubStringIndex(data, "/");
-                    pos.x = (float)llGetSubString(data, 0, p - 1);
-                    data = llGetSubString(data, p + 1, -1);
-                    if (data != "")
+                    if (p==0) {
+                	    domain = "";
+	                    data = llGetSubString(data, p + 1, -1); //* remove /
+                    }
+                    else if (p>0) {
+                	    domain = llGetSubString(data, 0, p - 1); //* domain name
+	                    data = llGetSubString(data, p + 1, -1); //* remove domain name
+                    }
+                    else
+					    domain = "";
+                    p = llSubStringIndex(data, "/");
+                    if (p>=0)
                     {
+                        region = llGetSubString(data, 0, p - 1); //* remove position/coordinates
+                        data = llGetSubString(data, p + 1, - 1); //* position/coordinates
+
                         p = llSubStringIndex(data, "/");
-                        pos.y = (float)llGetSubString(data, 0, p - 1);
+                        pos.x = (float)llGetSubString(data, 0, p - 1);
                         data = llGetSubString(data, p + 1, -1);
                         if (data != "")
                         {
                             p = llSubStringIndex(data, "/");
-                            if (p>=0)
-                                pos.z = (float)llGetSubString(data, 0, p - 1);
-                            else
-                                pos.z = (float)data;
+                            pos.y = (float)llGetSubString(data, 0, p - 1);
+                            data = llGetSubString(data, p + 1, -1);
+                            if (data != "")
+                            {
+                                p = llSubStringIndex(data, "/");
+                                if (p>=0)
+                                    pos.z = (float)llGetSubString(data, 0, p - 1);
+                                else
+                                    pos.z = (float)data;
+                            }
                         }
                     }
-                }
-                else {
-                    region = data;
-                    data = "";
-                    pos = <0, 0, 0>;
-                }
+                    else {
+                        region = data;
+                        data = "";
+                        pos = <0, 0, 0>;
+                    }
 
-                if (name == "")
-                    name = region;
+                    if (name == "")
+                        name = region;
 
-                if (domain != "")
-                    region = domain+":"+region;
-                llOwnerSay("name="+ name + " region="+region+" pos="+(string)pos);
-                targets_list += region;
-                targets_pos_list += pos;
-                targets_name_list += hyperPrefix + name;
-
+                    if (domain != "")
+                        region = domain+":"+region;
+                    //llOwnerSay("name="+ name + " region="+region+" pos="+(string)pos);
+                    targets_list += region;
+                    targets_pos_list += pos;
+                    targets_name_list += hyperPrefix + name;
+				}
                 ++notecardLine;
                 notecardQueryId = llGetNotecardLine(notecardName, notecardLine); //Query the dataserver for the next notecard line.
             }
@@ -394,14 +403,16 @@ default
     {
         if (channel == channel_number)
         {
-            list params = llParseString2List(message,[";"],[""]);
+            list params = llParseStringKeepNulls(message,[";"],[""]);
             string cmd = llList2String(params, 0);
             params = llDeleteSubList(params, 0, 0);
 
             //* rings
             if (cmd == "ready") { //* ring ready to teleport
                 if (dest_index>=0)
+                {
                     teleport(id, llList2Integer(params, 0));
+                }
             }
             //* gates
             if (cmd == "update") {
