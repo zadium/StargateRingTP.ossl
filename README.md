@@ -1,28 +1,28 @@
 ## Opensource Stargate ring teleporter ##
 
-Ground ring to teleport multiple avatars (only 5) to another position in the same region oer another region
+Ground ring to teleport multiple avatars (only 5) without sitting, to another position in the same region or another region via notecard "Regions"
 
-Idea is based on idea "APN Ring Transporters (OSGrid/OpenSim) by Spectre Draconia and author: Warin Cascabel, April 2009"
+Idea is based on "APN Ring Transporters (OSGrid/OpenSim) by Spectre Draconia and author: Warin Cascabel, April 2009"
 
-I rebuilt it from scratch the code and the mesh too, with better solution, I used sensor to catch avatars, rez a ring then send a message to that ring to teleport one avatar to the new position.
+I built it from scratch the code and the mesh too, with better solution, I used sensor to catch avatars, then rezzing a ring and send a message to that ring to teleport one avatar to the new position.
 
-Works in one region by adding multiple gates, it is auto detect it by gate names
-for cross regions, add a notecard with url of grids like
+Works in one region by adding multiple gates, it is auto detect other gates by names,
+for cross regions, add a notecard inside "Regions" use the same url in Firestorm viewer like
 
     /My Region/128/64/25
     hg.mygrid.com:8000/My Region/128/64/25
     hop://hg.mygrid.com:8000/My Region/128/64/25
-    #hg.mygrid.com:8000/My Region/128/64/25     it commented
+    #hg.mygrid.com:8000/My Region/128/64/25     it is commented
 
 do not use simicolone : for region links seperator
 
 	hg.mygrid.com:8000:My Region/128/64/25  wrong
 
-Some of grid do not allow hyper teleport or between regions, you can ask your admin to enabled it for you.
+Some of grid dose not allow hyper teleport or between regions, you can ask your admin to enabled it for you.
 
 ### Setup ###
 
-Easty, rez it , change the description, after rezzing all rings, click `Refresh` in menu, enjoy.
+Easy, rez it , change the description, after rezzing all rings, click `Refresh` in menu, enjoy.
 You need refresh button only at then end of setup, or after renaming it in description.
 If you like, put GateSound sound file in Gate prim for starting, and put RingSound file in Ring object inside the gate, or it use default sounds
 
@@ -44,7 +44,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 The source is on github with blender files and textures.
 
-https://github.com/zaher/StargateRingTP
+https://github.com/zadium/StargateRingTP
 
 ### Code Syntax ###
 
