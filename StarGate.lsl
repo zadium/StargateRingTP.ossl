@@ -3,8 +3,8 @@
     @description:
 
     @author: Zai Dium
-    @updated: "2022-09-02 10:13:38"
-    @revision: 257
+    @updated: "2022-09-02 10:37:36"
+    @revision: 259
     @version: 2.6
     @localfile: ?defaultpath\Stargate\?@name.lsl
     @license: MIT
@@ -256,8 +256,7 @@ default
             llOwnerSay("Could not find InternalRing");
         llSetLinkPrimitiveParams(nInternalRing, [PRIM_OMEGA, <0, 0, 0>, 0, 1.0]);
         if (channel_number == 0)
-	        channel_number = (((integer)("0x" + llGetSubString((string)llGetOwner(), -8, -1)) & 0x3FFFFFFF) ^ (integer)("0x" + llGetSubString(app_id, -8, -1)));
-        llOwnerSay((string)channel_number);
+            channel_number = (((integer)("0x" + llGetSubString((string)llGetOwner(), -8, -1)) & 0x3FFFFFFF) ^ (integer)("0x" + llGetSubString(app_id, -8, -1)));
         llListen(channel_number,"","","");
         update();
     }
