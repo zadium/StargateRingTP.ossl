@@ -3,8 +3,8 @@
     @description:
 
     @author: Zai Dium
-    @updated: "2022-08-26 19:42:25"
-    @revision: 245
+    @updated: "2022-09-02 10:13:38"
+    @revision: 257
     @version: 2.6
     @localfile: ?defaultpath\Stargate\?@name.lsl
     @license: MIT
@@ -18,7 +18,7 @@
 //integer owner_only = TRUE;
 string soundName = "GateSound";
 integer channel_number = 0; //* Set it to 0 to autogenerate it
-integer channel_private_number = 1;
+key app_id = "9846c7bf-bf42-4ee3-9741-e3f7c16a864d";
 
 string defaultSound = "289b4a8d-5a9a-4cc3-8077-3d3e5b08bb8c";
 //string ring_start_sound = " ddb8a14d-624a-4da2-861c-8feedd9c9195"; //*
@@ -256,7 +256,8 @@ default
             llOwnerSay("Could not find InternalRing");
         llSetLinkPrimitiveParams(nInternalRing, [PRIM_OMEGA, <0, 0, 0>, 0, 1.0]);
         if (channel_number == 0)
-          channel_number = (((integer)("0x"+llGetSubString((string)llGetOwner(),-8,-1)) & 0x3FFFFFFF) ^ 0xBFFFFFFF ) + channel_private_number;
+	        channel_number = (((integer)("0x" + llGetSubString((string)llGetOwner(), -8, -1)) & 0x3FFFFFFF) ^ (integer)("0x" + llGetSubString(app_id, -8, -1)));
+        llOwnerSay((string)channel_number);
         llListen(channel_number,"","","");
         update();
     }
@@ -344,15 +345,15 @@ default
 
                     p = llSubStringIndex(data, "/");
                     if (p==0) {
-                	    domain = "";
-	                    data = llGetSubString(data, p + 1, -1); //* remove /
+                        domain = "";
+                        data = llGetSubString(data, p + 1, -1); //* remove /
                     }
                     else if (p>0) {
-                	    domain = llGetSubString(data, 0, p - 1); //* domain name
-	                    data = llGetSubString(data, p + 1, -1); //* remove domain name
+                        domain = llGetSubString(data, 0, p - 1); //* domain name
+                        data = llGetSubString(data, p + 1, -1); //* remove domain name
                     }
                     else
-					    domain = "";
+                        domain = "";
                     p = llSubStringIndex(data, "/");
                     if (p>=0)
                     {
@@ -392,7 +393,7 @@ default
                     targets_list += region;
                     targets_pos_list += pos;
                     targets_name_list += hyperPrefix + name;
-				}
+                }
                 ++notecardLine;
                 notecardQueryId = llGetNotecardLine(notecardName, notecardLine); //Query the dataserver for the next notecard line.
             }
