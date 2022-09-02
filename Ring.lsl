@@ -3,8 +3,8 @@
     @description:
 
     @author: Zai Dium
-    @updated: "2022-08-26 19:45:44"
-    @revision: 145
+    @updated: "2022-09-02 10:14:08"
+    @revision: 147
     @localfile: ?defaultpath\Stargate\?@name.lsl
     @license: MIT
 
@@ -18,7 +18,7 @@ integer owner_only = TRUE;
 string ringSound = "RingSound";
 
 integer channel_number = 0; //* Set it to 0 to autogenerate it
-integer channel_private_number = 1;
+key app_id = "9846c7bf-bf42-4ee3-9741-e3f7c16a864d";
 
 //*
 string ringDefaultSound = "e6a27da5-6eed-40e7-b57b-e99ac9eb42fe";
@@ -122,7 +122,7 @@ init(){
     //llOwnerSay("Entry Number: " + (string)ring_number);
     if (ring_number != 0) {
         if (channel_number == 0)
-          channel_number = (((integer)("0x"+llGetSubString((string)llGetOwner(),-8,-1)) & 0x3FFFFFFF) ^ 0xBFFFFFFF ) + channel_private_number;
+          channel_number = (((integer)("0x" + llGetSubString((string)llGetOwner(), -8, -1)) & 0x3FFFFFFF) ^ (integer)("0x" + llGetSubString(app_id, -8, -1)));
 
         llListen(channel_number,"","","");
         start();
@@ -147,7 +147,7 @@ default
     on_rez(integer param)
     {
         if (param != 0) {
- 	    	llTargetOmega(llRot2Up(llGetLocalRot()), PI, 2.0);
+             llTargetOmega(llRot2Up(llGetLocalRot()), PI, 2.0);
             rez_owner = osGetRezzingObject();
             ring_number = param;
             llSetObjectDesc((string)param); //* because not saved to `listen` scope :(
