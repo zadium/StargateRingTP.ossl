@@ -1,11 +1,11 @@
 /**
-    @name: StarGate 
+    @name: StarGate
     @description:
 
     @author: Zai Dium
-    @updated: "2022-09-02 10:37:36"
-    @revision: 259
-    @version: 2.6
+    @updated: "2022-09-03 21:56:09"
+    @revision: 263
+    @version: 2.19
     @localfile: ?defaultpath\Stargate\?@name.lsl
     @license: MIT
 
@@ -56,6 +56,12 @@ key notecardQueryId;
 integer notecardLine;
 string notecardName = "Regions";
 
+sendUpdate()
+{
+    update_id = llGenerateKey();
+    sendCommand("update", [update_id, version]);
+}
+
 readNotecard()
 {
     if (llGetInventoryKey(notecardName) != NULL_KEY)
@@ -63,6 +69,8 @@ readNotecard()
         notecardLine = 0;
         notecardQueryId = llGetNotecardLine(notecardName, notecardLine);
     }
+    else
+    	sendUpdate();
 }
 
 listList(list l)
@@ -320,8 +328,7 @@ default
             if (data == EOF) //Reached end of notecard (End Of File).
             {
                 notecardQueryId = NULL_KEY;
-                update_id = llGenerateKey();
-                sendCommand("update", [update_id, version]);
+                sendUpdate();
             }
             else
             {
@@ -401,6 +408,7 @@ default
 
     listen (integer channel, string name, key id, string message)
     {
+    	llOwnerSay(message);
         if (channel == channel_number)
         {
             list params = llParseStringKeepNulls(message,[";"],[""]);
