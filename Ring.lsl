@@ -3,8 +3,8 @@
     @description:
 
     @author: Zai Dium
-    @updated: "2022-09-02 10:36:52"
-    @revision: 148
+    @updated: "2022-09-03 21:50:06"
+    @revision: 152
     @localfile: ?defaultpath\Stargate\?@name.lsl
     @license: MIT
 
