@@ -3,8 +3,8 @@
     @description:
 
     @author: Zai Dium
-    @updated: "2022-09-05 00:55:33"
-    @revision: 276
+    @updated: "2022-09-05 01:15:54"
+    @revision: 279
     @version: 2.19
     @localfile: ?defaultpath\Stargate\?@name.lsl
     @license: MIT
@@ -357,7 +357,7 @@ default
                     integer p = llSubStringIndex(data, "=");
                     if (p>=0) {
                         name = llGetSubString(data, 0, p - 1);
-                        data = llGetSubString(data, p - 1, -1);
+                        data = llGetSubString(data, p + 1, -1);
                     }
 
                     if (llToLower(llGetSubString(data, 0, 5)) == "hop://")
