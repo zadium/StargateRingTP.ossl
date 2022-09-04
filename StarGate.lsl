@@ -3,8 +3,8 @@
     @description:
 
     @author: Zai Dium
-    @updated: "2022-09-03 21:56:09"
-    @revision: 263
+    @updated: "2022-09-05 00:55:33"
+    @revision: 276
     @version: 2.19
     @localfile: ?defaultpath\Stargate\?@name.lsl
     @license: MIT
@@ -37,8 +37,12 @@ list menu_list = [ "<--", "Refresh", "-->" ]; //* general navigation
 
 key soundid;
 
+list nc_targets_list = []; //* gate rings keys list
+list nc_targets_pos_list = []; //* gate rings pos list
+list nc_targets_name_list = []; //* gate rings list
+
 list targets_list = []; //* gate rings keys list
-list targets_pos_list = []; //* gate rings keys list
+list targets_pos_list = []; //* gate rings pos list
 list targets_name_list = []; //* gate rings list
 
 list avatars_list = []; //* hold temp list of avatar keys for teleporting
@@ -58,6 +62,7 @@ string notecardName = "Regions";
 
 sendUpdate()
 {
+    clear();
     update_id = llGenerateKey();
     sendCommand("update", [update_id, version]);
 }
@@ -70,7 +75,7 @@ readNotecard()
         notecardQueryId = llGetNotecardLine(notecardName, notecardLine);
     }
     else
-    	sendUpdate();
+        sendUpdate();
 }
 
 listList(list l)
@@ -217,13 +222,22 @@ finish()
 }
 
 clear(){
+    targets_list = nc_targets_list;
+    targets_pos_list = nc_targets_pos_list;
+    targets_name_list = nc_targets_name_list;
+}
+
+full_clear(){
     targets_list = [];
     targets_pos_list = [];
     targets_name_list = [];
+    nc_targets_list = [];
+    nc_targets_pos_list = [];
+    nc_targets_name_list = [];
 }
 
-update(){
-    clear();
+referesh(){
+    full_clear();
     readNotecard();
     //* when finish read notecard we send to other gates
 }
@@ -266,7 +280,7 @@ default
         if (channel_number == 0)
             channel_number = (((integer)("0x" + llGetSubString((string)llGetOwner(), -8, -1)) & 0x3FFFFFFF) ^ (integer)("0x" + llGetSubString(app_id, -8, -1)));
         llListen(channel_number,"","","");
-        update();
+        referesh();
     }
 
     on_rez(integer start_param )
@@ -396,9 +410,9 @@ default
                     if (domain != "")
                         region = domain+":"+region;
                     //llOwnerSay("name="+ name + " region="+region+" pos="+(string)pos);
-                    targets_list += region;
-                    targets_pos_list += pos;
-                    targets_name_list += hyperPrefix + name;
+                    nc_targets_list += region;
+                    nc_targets_pos_list += pos;
+                    nc_targets_name_list += hyperPrefix + name;
                 }
                 ++notecardLine;
                 notecardQueryId = llGetNotecardLine(notecardName, notecardLine); //Query the dataserver for the next notecard line.
@@ -408,7 +422,6 @@ default
 
     listen (integer channel, string name, key id, string message)
     {
-    	llOwnerSay(message);
         if (channel == channel_number)
         {
             list params = llParseStringKeepNulls(message,[";"],[""]);
@@ -459,7 +472,7 @@ default
                 showDialog(id);
             }
             else if (message == "Refresh") {
-                update();
+                referesh();
                 finish();
             }
             else if (button_index != -1)
