@@ -3,8 +3,8 @@
     @description:
 
     @author: Zai Dium
-    @updated: "2022-06-23 21:21:37"
-    @revision: 136
+    @updated: "2022-08-05 13:48:52"
+    @revision: 145
     @version: 2
     @localfile: ?defaultpath\Stargate\?@name.lsl
     @license: MIT
@@ -23,6 +23,8 @@ integer channel_private_number = 1;
 string defaultSound = "289b4a8d-5a9a-4cc3-8077-3d3e5b08bb8c";
 //string ring_start_sound = " ddb8a14d-624a-4da2-861c-8feedd9c9195"; //*
 //*
+
+integer version = 210; //*2.1
 
 integer glow_face = 0;
 integer ring_count = 5; //* amount of rings to rez and teleport
@@ -315,7 +317,7 @@ default
                 if (update_id != llList2Key(cmdList, 0)){
                     clear();
                     update_id = llList2Key(cmdList, 0);
-                    sendCommand("update", [update_id]); //* send pong reply (ring sync)
+                    sendCommand("update", [update_id, version]); //* send pong reply (ring sync)
                 }
                 addGate(id);
             }
