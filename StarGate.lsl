@@ -3,8 +3,8 @@
     @description:
 
     @author: Zai Dium
-    @updated: "2022-09-05 01:15:54"
-    @revision: 279
+    @updated: "2023-04-02 16:48:41"
+    @revision: 311
     @version: 2.19
     @localfile: ?defaultpath\Stargate\?@name.lsl
     @license: MIT
@@ -59,13 +59,6 @@ vector old_face_color;
 key notecardQueryId;
 integer notecardLine;
 string notecardName = "Regions";
-
-sendUpdate()
-{
-    clear();
-    update_id = llGenerateKey();
-    sendCommand("update", [update_id, version]);
-}
 
 readNotecard()
 {
@@ -139,6 +132,13 @@ sendLocalCommand(string cmd, list params)
         cmd = cmd + ";" + llList2String(params, i);
     }
     llSay(channel_number, cmd);
+}
+
+sendUpdate()
+{
+    clear();
+    update_id = llGenerateKey();
+    sendCommand("update", [update_id, version]);
 }
 
 //* case sensitive
@@ -321,7 +321,7 @@ default
     }
 
     no_sensor(){
-       finish();
+        finish();
     }
 
     timer()
@@ -332,7 +332,7 @@ default
 
     object_rez(key id)
     {
-         sendCommandTo(id, "setup", []);
+            sendCommandTo(id, "setup", []);
     }
 
     dataserver( key queryid, string data )
@@ -466,8 +466,8 @@ default
             }
             else if (message == "-->")
             {
-                integer max_limit = llGetListLength(targets_name_list) / 9;
-                if (max_limit >= 1 && cur_page <= max_limit)
+                integer max_limit = (llGetListLength(targets_name_list)-1) / 9;
+                if (cur_page < max_limit)
                     cur_page += 1;
                 showDialog(id);
             }
@@ -480,7 +480,7 @@ default
                 dest_index = button_index;
                 llSensor("", NULL_KEY, AGENT, sensor_range, PI);
                 llSetTimerEvent(ring_total_time);
-           }
+            }
         }
     }
 }
