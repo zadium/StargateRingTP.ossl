@@ -1,13 +1,13 @@
 ## Opensource Stargate ring teleporter ##
 
-Ground ring to teleport multiple avatars (only 5) without sitting, to another position in the same region or another region via notecard "Regions"
+Ground ring to teleport multiple avatars (only 5) without sitting, to another position in the same region or another region via notecard "Targets"
 
 Idea is based on "APN Ring Transporters (OSGrid/OpenSim) by Spectre Draconia and author: Warin Cascabel, April 2009"
 
 I built it from scratch the code and the mesh too, with better solution, I used sensor to catch avatars, then rezzing a ring and send a message to that ring to teleport one avatar to the new position.
 
 Works in one region by adding multiple gates, it is auto detect other gates by names,
-for cross regions, add a notecard inside "Regions" use the same url in Firestorm viewer like
+for cross regions, add a notecard inside "Targets" use the same url in Firestorm viewer like
 
     /My Region/128/64/25
     hg.mygrid.com:8000/My Region/128/64/25
@@ -16,7 +16,7 @@ for cross regions, add a notecard inside "Regions" use the same url in Firestorm
 
 do not use simicolone : for region links seperator
 
-	hg.mygrid.com:8000:My Region/128/64/25  wrong
+    hg.mygrid.com:8000:My Region/128/64/25  wrong
 
 Some of grid dose not allow hyper teleport or between regions, you can ask your admin to enabled it for you.
 

@@ -3,9 +3,9 @@
     @description:
 
     @author: Zai Dium
-    @updated: "2023-04-02 16:48:41"
-    @revision: 311
-    @version: 2.19
+    @updated: "2023-05-20 15:02:31"
+    @revision: 257
+    @version: 3.1
     @localfile: ?defaultpath\Stargate\?@name.lsl
     @license: MIT
 
@@ -15,10 +15,12 @@
 */
 
 //* User Setting
+string InternalRingName = "InternalRing";
+string notecardName = "Targets";
 //integer owner_only = TRUE;
 string soundName = "GateSound";
 integer channel_number = 0; //* Set it to 0 to autogenerate it
-key app_id = "9846c7bf-bf42-4ee3-9741-e3f7c16a864d";
+integer channel_private_number = 1;
 
 string defaultSound = "289b4a8d-5a9a-4cc3-8077-3d3e5b08bb8c";
 //string ring_start_sound = " ddb8a14d-624a-4da2-861c-8feedd9c9195"; //*
@@ -37,12 +39,8 @@ list menu_list = [ "<--", "Refresh", "-->" ]; //* general navigation
 
 key soundid;
 
-list nc_targets_list = []; //* gate rings keys list
-list nc_targets_pos_list = []; //* gate rings pos list
-list nc_targets_name_list = []; //* gate rings list
-
 list targets_list = []; //* gate rings keys list
-list targets_pos_list = []; //* gate rings pos list
+list targets_pos_list = []; //* gate rings keys list
 list targets_name_list = []; //* gate rings list
 
 list avatars_list = []; //* hold temp list of avatar keys for teleporting
@@ -58,7 +56,6 @@ vector old_face_color;
 
 key notecardQueryId;
 integer notecardLine;
-string notecardName = "Regions";
 
 readNotecard()
 {
@@ -67,8 +64,6 @@ readNotecard()
         notecardLine = 0;
         notecardQueryId = llGetNotecardLine(notecardName, notecardLine);
     }
-    else
-        sendUpdate();
 }
 
 listList(list l)
@@ -132,13 +127,6 @@ sendLocalCommand(string cmd, list params)
         cmd = cmd + ";" + llList2String(params, i);
     }
     llSay(channel_number, cmd);
-}
-
-sendUpdate()
-{
-    clear();
-    update_id = llGenerateKey();
-    sendCommand("update", [update_id, version]);
 }
 
 //* case sensitive
@@ -222,22 +210,13 @@ finish()
 }
 
 clear(){
-    targets_list = nc_targets_list;
-    targets_pos_list = nc_targets_pos_list;
-    targets_name_list = nc_targets_name_list;
-}
-
-full_clear(){
     targets_list = [];
     targets_pos_list = [];
     targets_name_list = [];
-    nc_targets_list = [];
-    nc_targets_pos_list = [];
-    nc_targets_name_list = [];
 }
 
-referesh(){
-    full_clear();
+update(){
+    clear();
     readNotecard();
     //* when finish read notecard we send to other gates
 }
@@ -273,14 +252,14 @@ default
         vector size = llList2Vector(box, 1) * llGetRot() - llList2Vector(box, 0) * llGetRot();
         sensor_range = ((size.x + size.y) / 2) / 2; //* avarage / 2
 
-        nInternalRing = getPrimNumber("InternalRing");
+        nInternalRing = getPrimNumber(InternalRingName);
         if (!nInternalRing)
             llOwnerSay("Could not find InternalRing");
         llSetLinkPrimitiveParams(nInternalRing, [PRIM_OMEGA, <0, 0, 0>, 0, 1.0]);
         if (channel_number == 0)
-            channel_number = (((integer)("0x" + llGetSubString((string)llGetOwner(), -8, -1)) & 0x3FFFFFFF) ^ (integer)("0x" + llGetSubString(app_id, -8, -1)));
+        channel_number = (((integer)("0x"+llGetSubString((string)llGetOwner(),-8,-1)) & 0x3FFFFFFF) ^ 0xBFFFFFFF ) + channel_private_number;
         llListen(channel_number,"","","");
-        referesh();
+        update();
     }
 
     on_rez(integer start_param )
@@ -332,7 +311,7 @@ default
 
     object_rez(key id)
     {
-            sendCommandTo(id, "setup", []);
+        sendCommandTo(id, "setup", []);
     }
 
     dataserver( key queryid, string data )
@@ -342,7 +321,8 @@ default
             if (data == EOF) //Reached end of notecard (End Of File).
             {
                 notecardQueryId = NULL_KEY;
-                sendUpdate();
+                update_id = llGenerateKey();
+                sendCommand("update", [update_id, version]);
             }
             else
             {
@@ -357,7 +337,7 @@ default
                     integer p = llSubStringIndex(data, "=");
                     if (p>=0) {
                         name = llGetSubString(data, 0, p - 1);
-                        data = llGetSubString(data, p + 1, -1);
+                        data = llGetSubString(data, p - 1, -1);
                     }
 
                     if (llToLower(llGetSubString(data, 0, 5)) == "hop://")
@@ -410,9 +390,9 @@ default
                     if (domain != "")
                         region = domain+":"+region;
                     //llOwnerSay("name="+ name + " region="+region+" pos="+(string)pos);
-                    nc_targets_list += region;
-                    nc_targets_pos_list += pos;
-                    nc_targets_name_list += hyperPrefix + name;
+                    targets_list += region;
+                    targets_pos_list += pos;
+                    targets_name_list += hyperPrefix + name;
                 }
                 ++notecardLine;
                 notecardQueryId = llGetNotecardLine(notecardName, notecardLine); //Query the dataserver for the next notecard line.
@@ -472,7 +452,7 @@ default
                 showDialog(id);
             }
             else if (message == "Refresh") {
-                referesh();
+                update();
                 finish();
             }
             else if (button_index != -1)
