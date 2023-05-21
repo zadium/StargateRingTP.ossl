@@ -3,8 +3,8 @@
     @description:
 
     @author: Zai Dium
-    @updated: "2023-05-20 15:02:31"
-    @revision: 257
+    @updated: "2023-05-21 21:53:06"
+    @revision: 337
     @version: 3.1
     @localfile: ?defaultpath\Stargate\?@name.lsl
     @license: MIT
@@ -66,17 +66,6 @@ readNotecard()
     }
 }
 
-listList(list l)
-{
-    integer len = llGetListLength(l);
-    integer i;
-    for( i = 0; i < len; i++ )
-    {
-        llOwnerSay((string)i + ": " +llList2String(l, i));
-    }
-    llOwnerSay("Total = " + (string)len);
-}
-
 list getMenu(integer page)
 {
     //llOwnerSay("page " + (string)page);
@@ -92,11 +81,23 @@ list getMenu(integer page)
     }
 }
 
-showDialog(key toucher_id) {
+showDialog(key toucher_id)
+{
     dialog_channel = -1 - (integer)("0x" + llGetSubString( (string) llGetKey(), -7, -1) );
     llDialog(toucher_id, "Ring Gate", getMenu(cur_page), dialog_channel);
     llListenRemove(dialog_listen_id);
     dialog_listen_id = llListen(dialog_channel, "", toucher_id, "");
+}
+
+messageTo(key id, string cmd, list params)
+{
+    integer len = llGetListLength(params);
+    integer i;
+    for( i = 0; i < len; i++ )
+    {
+        cmd = cmd + ";" + llList2String(params, i);
+    }
+    osMessageObject(id, cmd);
 }
 
 sendCommandTo(key id, string cmd, list params)
@@ -107,26 +108,15 @@ sendCommandTo(key id, string cmd, list params)
     {
         cmd = cmd + ";" + llList2String(params, i);
     }
-    if (id)
-        llRegionSayTo(id, channel_number, cmd);
-    else
+    if (id == NULL_KEY)
         llRegionSay(channel_number, cmd);
+    else
+        llRegionSayTo(id, channel_number, cmd);
 }
 
 sendCommand(string cmd, list params)
 {
     sendCommandTo(NULL_KEY, cmd, params);
-}
-
-sendLocalCommand(string cmd, list params)
-{
-    integer len = llGetListLength(params);
-    integer i;
-    for( i = 0; i < len; i++ )
-    {
-        cmd = cmd + ";" + llList2String(params, i);
-    }
-    llSay(channel_number, cmd);
 }
 
 //* case sensitive
@@ -150,9 +140,12 @@ sound(){
 
 integer nInternalRing = -1;
 integer started = FALSE;
+integer cur_index = 0;
 
-start(integer number_detected)
+start(integer agents_count)
 {
+    cur_index = 0;
+
     llSetLinkPrimitiveParams(nInternalRing, [PRIM_OMEGA, llRot2Up(llGetLocalRot()), PI, 1.0]);
 
     old_face_color = llGetColor(glow_face);
@@ -162,10 +155,11 @@ start(integer number_detected)
     sound();
     vector pos = llGetPos() - <0,0,0.1>;
     integer ringNumber;
-    for (ringNumber = 1; ringNumber <= ring_count; ringNumber++) {
+    for (ringNumber = 1; ringNumber <= ring_count; ringNumber++)
+    {
         llSleep(ring_total_time / 10);
         integer n;
-        if (ringNumber > number_detected)
+        if (ringNumber > agents_count)
             n = -ringNumber;
         else
             n = ringNumber;
@@ -174,22 +168,25 @@ start(integer number_detected)
     llSetTimerEvent(ring_total_time);
 }
 
-teleport(key id, integer index)
+teleport(key ring_id, integer index)
 {
-/*    if (index >= llGetListLength(avatars_list))
-        llOwnerSay("out of index"); //* but we will send teleport command to make ring fall down
-*/
-    key agent = llList2Key(avatars_list, index - 1); //* -1 based on 0 while ring numbers is based on 1
-    string region;
-    key dest_id;
-    if (llGetListEntryType(targets_list, dest_index) == TYPE_KEY)
-        region = "";//llGetRegionName();
-    else
-        region = llList2Key(targets_list, dest_index);
-    vector dest = llList2Vector(targets_pos_list, dest_index) + <0,0,0.8>;
-    vector lookAt = llList2Vector(llGetObjectDetails(agent, [OBJECT_ROT]), 0);
+    //* only send message to ring (that have number>0) others are temp
+    if (index < llGetListLength(avatars_list))
+    {
+        key agent = llList2Key(avatars_list, index); //* -1 based on 0 while ring numbers is based on 1
+        if (agent != NULL_KEY)
+        {
+            string region;
+            if (llGetListEntryType(targets_list, dest_index) == TYPE_KEY)
+                region = "";//llGetRegionName();
+            else
+                region = llList2Key(targets_list, dest_index);
+            vector dest = llList2Vector(targets_pos_list, dest_index) + <0,0,0.8>;
+            vector lookAt = llList2Vector(llGetObjectDetails(agent, [OBJECT_ROT]), 0);
 
-    sendCommandTo(id, "teleport", [(string)(index) , region, (string)dest , (string)lookAt, (string)agent]); //* send mesage to incoming
+            messageTo(ring_id, "teleport", [(string)(index + 1) , region, (string)dest , (string)lookAt, (string)agent, FALSE]); //* send mesage to incoming
+        }
+    }
 }
 
 finish()
@@ -205,11 +202,13 @@ finish()
     }
     llSetPrimitiveParams([PRIM_GLOW, glow_face, 0.00, PRIM_FULLBRIGHT, glow_face, FALSE]); //* deactivate glow
     dest_index = -1;
+    cur_index = 0;
     //avatars_list = []; nop
     started = FALSE;
 }
 
 clear(){
+    cur_index = 0;
     targets_list = [];
     targets_pos_list = [];
     targets_name_list = [];
@@ -257,8 +256,9 @@ default
             llOwnerSay("Could not find InternalRing");
         llSetLinkPrimitiveParams(nInternalRing, [PRIM_OMEGA, <0, 0, 0>, 0, 1.0]);
         if (channel_number == 0)
-        channel_number = (((integer)("0x"+llGetSubString((string)llGetOwner(),-8,-1)) & 0x3FFFFFFF) ^ 0xBFFFFFFF ) + channel_private_number;
-        llListen(channel_number,"","","");
+            channel_number = (((integer)("0x"+llGetSubString((string)llGetOwner(),-8,-1)) & 0x3FFFFFFF) ^ 0xBFFFFFFF ) + channel_private_number;
+        integer channel_id = llListen(channel_number, "", NULL_KEY, "");
+        //llOwnerSay((string)channel_id);
         update();
     }
 
@@ -276,7 +276,8 @@ default
 
     touch_start(integer num_detected)
     {
-        showDialog(llDetectedKey(0));
+        if (!started)
+            showDialog(llDetectedKey(0));
     }
 
     sensor( integer number_detected )
@@ -311,7 +312,11 @@ default
 
     object_rez(key id)
     {
-        sendCommandTo(id, "setup", []);
+        if (dest_index>=0)
+        {
+            teleport(id, cur_index);
+            cur_index++;
+        }
     }
 
     dataserver( key queryid, string data )
@@ -326,7 +331,7 @@ default
             }
             else
             {
-                if (llToLower(llGetSubString(data, 0, 0)) != "#")
+                if ((data!="") && (llToLower(llGetSubString(data, 0, 0)) != "#"))
                 {
                     string name = "";
                     string domain;
@@ -337,7 +342,7 @@ default
                     integer p = llSubStringIndex(data, "=");
                     if (p>=0) {
                         name = llGetSubString(data, 0, p - 1);
-                        data = llGetSubString(data, p - 1, -1);
+                        data = llGetSubString(data, p+1, -1);
                     }
 
                     if (llToLower(llGetSubString(data, 0, 5)) == "hop://")
@@ -357,8 +362,13 @@ default
                     p = llSubStringIndex(data, "/");
                     if (p>=0)
                     {
-                        region = llGetSubString(data, 0, p - 1); //* remove position/coordinates
-                        data = llGetSubString(data, p + 1, - 1); //* position/coordinates
+                        if (domain == ".")
+                            region = ".";
+                        else
+                        {
+                            region = llGetSubString(data, 0, p - 1); //* remove position/coordinates
+                            data = llGetSubString(data, p + 1, - 1); //* position/coordinates
+                        }
 
                         p = llSubStringIndex(data, "/");
                         pos.x = (float)llGetSubString(data, 0, p - 1);
@@ -387,8 +397,12 @@ default
                     if (name == "")
                         name = region;
 
+                    if (domain == ".")
+                        domain = "";
                     if (domain != "")
                         region = domain+":"+region;
+                    if (region == ".")
+                        region = "";
                     //llOwnerSay("name="+ name + " region="+region+" pos="+(string)pos);
                     targets_list += region;
                     targets_pos_list += pos;
@@ -402,22 +416,18 @@ default
 
     listen (integer channel, string name, key id, string message)
     {
+        //llOwnerSay((string)id+":"+message);
         if (channel == channel_number)
         {
             list params = llParseStringKeepNulls(message,[";"],[""]);
             string cmd = llList2String(params, 0);
             params = llDeleteSubList(params, 0, 0);
 
-            //* rings
-            if (cmd == "ready") { //* ring ready to teleport
-                if (dest_index>=0)
-                {
-                    teleport(id, llList2Integer(params, 0));
-                }
-            }
             //* gates
-            if (cmd == "update") {
-                if (update_id != llList2Key(params, 0)){
+            if (cmd == "update")
+            {
+                if (update_id != llList2Key(params, 0))
+                {
                     clear();
                     update_id = llList2Key(params, 0);
                     sendCommand("update", [update_id, version]); //* send pong reply (ring sync)
