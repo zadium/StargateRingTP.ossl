@@ -9,9 +9,12 @@ I built it from scratch the code and the mesh too, with better solution, I used 
 Works in one region by adding multiple gates, it is auto detect other gates by names,
 for cross regions, add a notecard inside "Targets" use the same url in Firestorm viewer like
 
-    /My Region/128/64/25
-    hg.mygrid.com:8000/My Region/128/64/25
     hop://hg.mygrid.com:8000/My Region/128/64/25
+    hg.mygrid.com:8000/My Region/128/64/25
+    /My Region/128/64/25
+    ./My Region/128/64/25
+    /./128/64/25
+    ./128/64/25
     #hg.mygrid.com:8000/My Region/128/64/25     it is commented
 
 do not use simicolone : for region links seperator

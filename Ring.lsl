@@ -3,8 +3,9 @@
     @description:
 
     @author: Zai Dium
-    @updated: "2022-09-04 21:47:45"
-    @revision: 154
+    @updated: "2023-05-21 21:55:39"
+    @version: 3.1
+    @revision: 264
     @localfile: ?defaultpath\Stargate\?@name.lsl
     @license: MIT
 
@@ -14,11 +15,7 @@
 */
 
 //* User Setting
-integer owner_only = TRUE;
 string ringSound = "RingSound";
-
-integer channel_number = 0; //* Set it to 0 to autogenerate it
-key app_id = "9846c7bf-bf42-4ee3-9741-e3f7c16a864d";
 
 //*
 string ringDefaultSound = "e6a27da5-6eed-40e7-b57b-e99ac9eb42fe";
@@ -29,7 +26,7 @@ float ring_height = 0.5;
 
 vector start_pos; //* starting pos
 integer ring_number = 0; //* ring number
-integer temp = 0; //* if enabled do not process teleports
+integer dieRing = 0; //* if enabled do not process teleports
 
 key soundid;
 
@@ -38,39 +35,38 @@ vector toPos;
 vector toLookAt;
 key agent;
 
-sendCommandTo(key id, string cmd, list params)
-{
-    integer len = llGetListLength(params);
-    integer i;
-    for( i = 0; i < len; i++ )
-    {
-        cmd = cmd + ";" + llList2String(params, i);
-    }
-    if (id)
-        llRegionSayTo(id, channel_number, cmd);
-    else
-        llRegionSay(channel_number, cmd);
-}
-
-sendCommand(string cmd, list params)
-{
-    sendCommandTo(NULL_KEY, cmd, params);
-}
-
-sendLocalCommand(string cmd, list params)
-{
-    integer len = llGetListLength(params);
-    integer i;
-    for( i = 0; i < len; i++ )
-    {
-        cmd = cmd + ";" + llList2String(params, i);
-    }
-    llSay(channel_number, cmd);
-}
-
-integer dieRing = FALSE;
 integer isFinished = FALSE;
 key rez_owner;
+
+setTimer()
+{
+    llSetTimerEvent((ring_total_time / ring_count) * (ring_count - ring_number + 1));//* +1 for not be 0
+}
+
+sound(){
+    llTriggerSound(soundid, 1.0);
+}
+
+teleport()
+{
+    //llOwnerSay("teleporting: "+(string)agent+" "+toRegion);
+    if (toRegion == "")
+    {
+        osLocalTeleportAgent(agent, toPos, ZERO_VECTOR, toLookAt, OS_LTPAG_USELOOKAT);
+    }
+    else
+    {
+        //llTeleportAgent(agent, toRegion, toPos, toLookAt);
+        osTeleportAgent(agent, toRegion, toPos, toLookAt);
+    }
+
+    if (isFinished)
+    {
+        llSleep(0.2);
+//        llOwnerSay("die:teleport");
+        llDie();
+    }
+}
 
 start()
 {
@@ -84,56 +80,19 @@ start()
     llSleep(0.2);
 }
 
-setTimer(integer die)
+raise()
 {
-    dieRing = die;
-    llSetTimerEvent((ring_total_time / ring_count) * (ring_count - ring_number + 1));//* +1 for not be 0
-}
-
-sound(){
-    llTriggerSound(soundid, 1.0);
-}
-
-teleport()
-{
-    if (toRegion == "") {
-        osTeleportAgent(agent, toPos, toLookAt);
-    }
-    else {
-        osTeleportAgent(agent, toRegion, toPos, toLookAt);
-    }
-}
-
-init(){
     soundid = llGetInventoryKey(ringSound);
     if (soundid == NULL_KEY)
         soundid = ringDefaultSound;
 
     sound();
 
-    //ring_number = (integer)llGetObjectDesc();
-    if (ring_number < 0) {
-        ring_number = -ring_number; //* based on 1 not 0, zero make bug diveded
-        temp = 1;
-    }
-    else
-        temp = 0;
-
-    //llOwnerSay("Entry Number: " + (string)ring_number);
-    if (ring_number != 0) {
-        if (channel_number == 0)
-          channel_number = (((integer)("0x" + llGetSubString((string)llGetOwner(), -8, -1)) & 0x3FFFFFFF) ^ (integer)("0x" + llGetSubString(app_id, -8, -1)));
-
-        llListen(channel_number,"","","");
+//    llOwnerSay("Entry Number: " + (string)ring_number);
+    if (ring_number != 0)
+    {
         start();
-
-        if (temp)
-            setTimer(TRUE);
-        else
-        {
-            setTimer(FALSE);
-            sendCommandTo(rez_owner, "ready", [(string)ring_number]); //* Gate will answer teleport
-        }
+        setTimer();
     }
 }
 
@@ -146,21 +105,29 @@ default
 
     on_rez(integer param)
     {
-        if (param != 0) {
-             llTargetOmega(llRot2Up(llGetLocalRot()), PI, 2.0);
+        //llOwnerSay("rez"+(string)param);
+        //osGrantScriptPermissions(llGetOwner(), ["osTeleportAgent"]);
+        llVolumeDetect(TRUE);
+        llSetPrimitiveParams([PRIM_TEMP_ON_REZ, TRUE]);
+        if (param != 0)
+        {
+            llTargetOmega(llRot2Up(llGetLocalRot()), PI, 2.0);
             rez_owner = osGetRezzingObject();
             ring_number = param;
-            llSetObjectDesc((string)param); //* because not saved to `listen` scope :(
-            //start();
-            init();
-            llSetPrimitiveParams([PRIM_TEMP_ON_REZ, TRUE]);
-            //llResetScript();
+            //llSetObjectDesc((string)param); //* because not saved to `listen` scope :(
+            llSetObjectName("Ring"+(string)param);
         }
-    }
 
-    touch_start(integer num_detected)
-    {
-         //sound();
+        //ring_number = (integer)llGetObjectDesc();
+        if (ring_number < 0)
+        {
+            ring_number = -ring_number; //* based on 1 not 0, zero make bug diveded
+            dieRing = TRUE;
+        }
+        else
+            dieRing = FALSE;
+
+        raise();
     }
 
     collision_start(integer num)
@@ -170,45 +137,38 @@ default
 
     run_time_permissions(integer perm)
     {
-        setTimer(TRUE);
         if(PERMISSION_TELEPORT & perm)
         {
             teleport();
         }
     }
 
-    listen (integer channel, string name, key id, string message)
+    dataserver( key queryid, string data )
     {
-        if (channel == channel_number)
+        if (ring_number > 0)
         {
-            if (ring_number > 0)
+            list params = llParseStringKeepNulls(data,[";"],[""]);
+            string cmd = llList2String(params,0);
+            params = llDeleteSubList(params, 0, 0);
+            if (cmd == "teleport")
             {
-                list params = llParseStringKeepNulls(message,[";"],[""]);
-                string cmd = llList2String(params,0);
-                params = llDeleteSubList(params, 0, 0);
-                if (cmd == "teleport")
+                //* only not temp rings
+                integer number = llList2Integer(params, 0);
+                if (number == ring_number)
                 {
-                    //* only not temp rings
-                    if (temp == 0)
+                    agent = llList2Key(params, 4);
+                    if (agent != NULL_KEY)
                     {
-                        integer number = llList2Integer(params, 0);
-                        if (number == ring_number)
+                        toRegion = llList2String(params, 1);
+                        toPos = llList2Vector(params, 2 );
+                        toLookAt = llList2Vector(params, 3);
+                        if ((agent == llGetOwner()) || (llGetPermissions() & PERMISSION_TELEPORT))
                         {
-                            agent = llList2Key(params, 4);
-                            if (agent)
-                            {
-                                toRegion = llList2String(params, 1);
-                                toPos = llList2Vector(params, 2 );
-                                toLookAt = llList2Vector(params, 3);
-                                if ((agent == llGetOwner()) || (llGetPermissions() & PERMISSION_TELEPORT))
-                                {
-                                    setTimer(TRUE);
-                                    teleport();
-                                }
-                                else {
-                                    llRequestPermissions(agent, PERMISSION_TELEPORT);
-                                }
-                            }
+                            teleport();
+                        }
+                        else
+                        {
+                            llRequestPermissions(agent, PERMISSION_TELEPORT);
                         }
                     }
                 }
@@ -218,16 +178,24 @@ default
 
     timer()
     {
-        llSetTimerEvent(0);
-        if (!isFinished) {
+        if (!isFinished)
+        {
             sound();
             llSetPos(start_pos);
             isFinished = TRUE;
         }
 
-        if (dieRing) {
-            llSleep(0.2);
+        if (dieRing)
+        {
+            //llOwnerSay("die:timer");
+            llSetTimerEvent(0);
             llDie();
         }
+        else
+        {
+            dieRing = TRUE;
+            llSetTimerEvent(30);
+        }
+
    }
 }
