@@ -3,13 +3,14 @@
     @description:
 
     @author: Zai Dium
-    @updated: "2023-05-21 21:53:06"
-    @revision: 337
+    @updated: "2023-05-21 22:51:58"
+    @revision: 343
     @version: 3.1
     @localfile: ?defaultpath\Stargate\?@name.lsl
     @license: MIT
 
     @ref:
+        https://www.101soundboards.com/boards/33269-stargate-sg1-soundboard
 
     @notice: Based on idea "APN Ring Transporters (OSGrid/OpenSim) by Spectre Draconia and author: Warin Cascabel, April 2009"
 */
@@ -183,7 +184,7 @@ teleport(key ring_id, integer index)
                 region = llList2Key(targets_list, dest_index);
             vector dest = llList2Vector(targets_pos_list, dest_index) + <0,0,0.8>;
             vector lookAt = llList2Vector(llGetObjectDetails(agent, [OBJECT_ROT]), 0);
-
+            dest = dest + llList2Vector(llGetObjectDetails(agent, [OBJECT_POS]), 0) - llGetRootPosition();
             messageTo(ring_id, "teleport", [(string)(index + 1) , region, (string)dest , (string)lookAt, (string)agent, FALSE]); //* send mesage to incoming
         }
     }
