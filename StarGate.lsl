@@ -3,8 +3,8 @@
     @description:
 
     @author: Zai Dium
-    @updated: "2023-05-21 22:51:58"
-    @revision: 343
+    @updated: "2023-05-23 00:47:27"
+    @revision: 387
     @version: 3.1
     @localfile: ?defaultpath\Stargate\?@name.lsl
     @license: MIT
@@ -27,7 +27,7 @@ string defaultSound = "289b4a8d-5a9a-4cc3-8077-3d3e5b08bb8c";
 //string ring_start_sound = " ddb8a14d-624a-4da2-861c-8feedd9c9195"; //*
 //*
 
-integer version = 250; //*2.5
+integer version = 290; //* 2.9
 
 string hyperPrefix=">";
 
@@ -40,6 +40,7 @@ list menu_list = [ "<--", "Refresh", "-->" ]; //* general navigation
 
 key soundid;
 
+list targets_type_list = []; //* gates list types lm, gate, region
 list targets_list = []; //* gate rings keys list
 list targets_pos_list = []; //* gate rings keys list
 list targets_name_list = []; //* gate rings list
@@ -172,20 +173,22 @@ start(integer agents_count)
 teleport(key ring_id, integer index)
 {
     //* only send message to ring (that have number>0) others are temp
+    string target;
+    string type = llList2String(targets_type_list, dest_index);
+    if (type == "lm" || type == "region")
+        target = llList2Key(targets_list, dest_index);
+    else //* gate
+        target = ""; //llGetRegionName();
     if (index < llGetListLength(avatars_list))
     {
         key agent = llList2Key(avatars_list, index); //* -1 based on 0 while ring numbers is based on 1
         if (agent != NULL_KEY)
         {
-            string region;
-            if (llGetListEntryType(targets_list, dest_index) == TYPE_KEY)
-                region = "";//llGetRegionName();
-            else
-                region = llList2Key(targets_list, dest_index);
-            vector dest = llList2Vector(targets_pos_list, dest_index) + <0,0,0.8>;
+
             vector lookAt = llList2Vector(llGetObjectDetails(agent, [OBJECT_ROT]), 0);
-            dest = dest + llList2Vector(llGetObjectDetails(agent, [OBJECT_POS]), 0) - llGetRootPosition();
-            messageTo(ring_id, "teleport", [(string)(index + 1) , region, (string)dest , (string)lookAt, (string)agent, FALSE]); //* send mesage to incoming
+            vector pos = llList2Vector(targets_pos_list, dest_index) + <0,0,0.8>;
+            pos = pos + llList2Vector(llGetObjectDetails(agent, [OBJECT_POS]), 0) - llGetRootPosition();
+            messageTo(ring_id, "teleport", [(string)(index + 1), (string)agent, type, target, (string)pos , (string)lookAt]); //* send mesage to incoming
         }
     }
 }
@@ -210,6 +213,7 @@ finish()
 
 clear(){
     cur_index = 0;
+    targets_type_list = [];
     targets_list = [];
     targets_pos_list = [];
     targets_name_list = [];
@@ -226,6 +230,7 @@ addGate(key id)
     if (llListFindList(targets_list,[id]) == -1)
     {
         targets_list += id; //* add ring to list
+        targets_type_list +=  "gate";
         targets_pos_list +=llList2Vector(llGetObjectDetails(id, [OBJECT_POS]), 0);
 
         string name = llList2String(llGetObjectDetails(id,[OBJECT_DESC]), 0);
@@ -250,7 +255,7 @@ default
 
         list box = llGetBoundingBox(llGetKey());
         vector size = llList2Vector(box, 1) * llGetRot() - llList2Vector(box, 0) * llGetRot();
-        sensor_range = ((size.x + size.y) / 2) / 2; //* avarage / 2
+        sensor_range = ((size.x + size.y) / 2) / 2 + 0.2; //* avarage / 2
 
         nInternalRing = getPrimNumber(InternalRingName);
         if (!nInternalRing)
@@ -258,7 +263,7 @@ default
         llSetLinkPrimitiveParams(nInternalRing, [PRIM_OMEGA, <0, 0, 0>, 0, 1.0]);
         if (channel_number == 0)
             channel_number = (((integer)("0x"+llGetSubString((string)llGetOwner(),-8,-1)) & 0x3FFFFFFF) ^ 0xBFFFFFFF ) + channel_private_number;
-        integer channel_id = llListen(channel_number, "", NULL_KEY, "");
+        llListen(channel_number, "", NULL_KEY, "");
         //llOwnerSay((string)channel_id);
         update();
     }
@@ -293,7 +298,7 @@ default
             }
 
             start(number_detected);
-            if (llGetListEntryType(targets_list, dest_index) == TYPE_KEY)
+            if (llList2String(targets_type_list, dest_index) == "gate")
                 sendCommandTo(llList2Key(targets_list, dest_index), "activate", []); //* send mesage to incoming
             llSleep(ring_total_time / 2);
         }
@@ -328,6 +333,18 @@ default
             {
                 notecardQueryId = NULL_KEY;
                 update_id = llGenerateKey();
+                integer c = llGetInventoryNumber(INVENTORY_LANDMARK);
+                integer i = 0;
+                string name;
+                while (i<c)
+                {
+                    name = llGetInventoryName(INVENTORY_LANDMARK, i);
+                    targets_name_list += "*" + name;
+                    targets_type_list += "lm";
+                    targets_list += name; //llGetInventoryKey(name);
+                    targets_pos_list += ZERO_VECTOR;
+                    i++;
+                }
                 sendCommand("update", [update_id, version]);
             }
             else
@@ -408,6 +425,7 @@ default
                     targets_list += region;
                     targets_pos_list += pos;
                     targets_name_list += hyperPrefix + name;
+                    targets_type_list += "region";
                 }
                 ++notecardLine;
                 notecardQueryId = llGetNotecardLine(notecardName, notecardLine); //Query the dataserver for the next notecard line.

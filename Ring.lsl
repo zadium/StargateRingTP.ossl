@@ -3,9 +3,9 @@
     @description:
 
     @author: Zai Dium
-    @updated: "2023-05-21 21:55:39"
+    @updated: "2023-05-23 01:01:53"
     @version: 3.1
-    @revision: 264
+    @revision: 294
     @localfile: ?defaultpath\Stargate\?@name.lsl
     @license: MIT
 
@@ -30,9 +30,10 @@ integer dieRing = 0; //* if enabled do not process teleports
 
 key soundid;
 
-string toRegion;
+string toTarget;
 vector toPos;
 vector toLookAt;
+string toType;
 key agent;
 
 integer isFinished = FALSE;
@@ -49,15 +50,15 @@ sound(){
 
 teleport()
 {
-    //llOwnerSay("teleporting: "+(string)agent+" "+toRegion);
-    if (toRegion == "")
+    //llOwnerSay("teleporting: "+(string)agent+" "+toTarget);
+    if (toTarget == "")
     {
         osLocalTeleportAgent(agent, toPos, ZERO_VECTOR, toLookAt, OS_LTPAG_USELOOKAT);
     }
     else
     {
-        //llTeleportAgent(agent, toRegion, toPos, toLookAt);
-        osTeleportAgent(agent, toRegion, toPos, toLookAt);
+        //llTeleportAgent(agent, toTarget, toPos, toLookAt);
+        osTeleportAgent(agent, toTarget, toPos, toLookAt);
     }
 
     if (isFinished)
@@ -145,6 +146,7 @@ default
 
     dataserver( key queryid, string data )
     {
+        //llOwnerSay("data: "+data);
         if (ring_number > 0)
         {
             list params = llParseStringKeepNulls(data,[";"],[""]);
@@ -156,13 +158,15 @@ default
                 integer number = llList2Integer(params, 0);
                 if (number == ring_number)
                 {
-                    agent = llList2Key(params, 4);
+                    agent = llList2Key(params, 1);
                     if (agent != NULL_KEY)
                     {
-                        toRegion = llList2String(params, 1);
-                        toPos = llList2Vector(params, 2 );
-                        toLookAt = llList2Vector(params, 3);
+                        toType = llToLower(llList2String(params, 2));
+                        toTarget = llList2String(params, 3);
+                        toPos = llList2Vector(params, 4);
+                        toLookAt = llList2Vector(params, 5);
                         if ((agent == llGetOwner()) || (llGetPermissions() & PERMISSION_TELEPORT))
+                        //if ((toTarget =="") || (agent == llGetOwner()))
                         {
                             teleport();
                         }
