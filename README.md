@@ -31,11 +31,14 @@ If you like, put GateSound sound file in Gate prim for starting, and put RingSou
 
 ### Buildup ###
 
+From Belnder export Stargate, InternalRing in one export file
+export Ring to another file
+
 You need
 
-* External Ring, as root object that have script
-* Internal Ring, name it as "InternalRing" to rotate it linked to the root
-* Ring inside inventory of External ring, with name "Ring"
+* External Ring, as root object that have script set physic shape to `Prim`
+* Internal Ring, name it as "InternalRing" to rotate it linked to the root, set Phsyic shape to `none`
+* Ring inside inventory of External ring, with name "Ring" set it to `Phantom`, make it glow and alpha 10
 
 ### License ###
 
