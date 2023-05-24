@@ -3,8 +3,8 @@
     @description:
 
     @author: Zai Dium
-    @updated: "2023-05-24 18:53:13"
-    @revision: 437
+    @updated: "2023-05-25 01:25:59"
+    @revision: 469
     @version: 3.1
     @localfile: ?defaultpath\Stargate\?@name.lsl
     @license: MIT
@@ -16,12 +16,13 @@
 */
 
 //* User Setting
+integer channel_private_number = 1;
+
 string InternalRingName = "InternalRing";
 string notecardName = "Targets";
 //integer owner_only = TRUE;
 string soundName = "GateSound";
-integer channel_number = 0; //* Set it to 0 to autogenerate it
-integer channel_private_number = 1;
+integer channel_number = 0; //* Set it to 0 to autogenerate it depends on group key
 
 string defaultSound = "289b4a8d-5a9a-4cc3-8077-3d3e5b08bb8c";
 //string ring_start_sound = " ddb8a14d-624a-4da2-861c-8feedd9c9195"; //*
@@ -34,12 +35,12 @@ string hyperPrefix=">";
 integer glow_face = 0;
 
 integer ring_count = 5; //* amount of rings to rez and teleport
-float sensor_range = 2;
 float ring_total_time = 5; //*seconds
 float ring_idle_time = 3; //*seconds
 
 list menu_list = [ "<--", "Refresh", "-->" ]; //* general navigation
 
+float sensor_range = 2;//* we change in entry, depend on size of prim
 key soundid;
 
 list targets_type_list = []; //* gates list types lm, gate, region
@@ -145,12 +146,46 @@ sound(){
 
 integer nInternalRing = -1;
 integer started = FALSE;
-integer cur_index = 0;
+
+teleport(key ring_id, key agent)
+{
+    //* only send message to ring (that have number>0) others are temp
+    string target;
+    string type = llList2String(targets_type_list, dest_index);
+    if (type == "lm" || type == "region")
+        target = llList2Key(targets_list, dest_index);
+    else //* gate
+        target = ""; //llGetRegionName();
+    //llOwnerSay("teleport "+(string)ring_id+" "+(string)agent);
+    if (agent != NULL_KEY)
+    {
+
+        vector lookAt = llList2Vector(llGetObjectDetails(agent, [OBJECT_ROT]), 0);
+        vector pos = llList2Vector(targets_pos_list, dest_index) + <0,0,0.8>;
+        pos = pos + llList2Vector(llGetObjectDetails(agent, [OBJECT_POS]), 0) - llGetRootPosition();
+        messageTo(ring_id, "teleport", [(string)agent, type, target, (string)pos , (string)lookAt]); //* send mesage to incoming
+    }
+}
+
+finish()
+{
+    llSetLinkPrimitiveParams(nInternalRing, [PRIM_OMEGA, <0, 0, 0>, PI, 1.0]);
+    //* we need this trick to reset rotation
+    llSetLinkPrimitiveParams(nInternalRing, [PRIM_ROTATION, llEuler2Rot(<0, 0, -180 * DEG_TO_RAD>)]);
+    llSetLinkPrimitiveParams(nInternalRing, [PRIM_ROTATION, llEuler2Rot(<0, 0, 0>)]);
+
+    llSetLinkAlpha(2,1.0,ALL_SIDES); //* show main ring base
+    if (started) {
+        llSetColor(old_face_color, glow_face);
+    }
+    llSetPrimitiveParams([PRIM_GLOW, glow_face, 0.00, PRIM_FULLBRIGHT, glow_face, FALSE]); //* deactivate glow
+    //dest_index = -1; nop
+    started = FALSE;
+    llSetTimerEvent(ring_idle_time);
+}
 
 start(integer agents_count)
 {
-    cur_index = 0;
-
     llSetLinkPrimitiveParams(nInternalRing, [PRIM_OMEGA, llRot2Up(llGetLocalRot()), PI, 1.0]);
 
     old_face_color = llGetColor(glow_face);
@@ -173,50 +208,7 @@ start(integer agents_count)
     llSetTimerEvent(ring_total_time);
 }
 
-teleport(key ring_id, integer index)
-{
-    //* only send message to ring (that have number>0) others are temp
-    string target;
-    string type = llList2String(targets_type_list, dest_index);
-    if (type == "lm" || type == "region")
-        target = llList2Key(targets_list, dest_index);
-    else //* gate
-        target = ""; //llGetRegionName();
-    if (index < llGetListLength(avatars_list))
-    {
-        key agent = llList2Key(avatars_list, index); //* -1 based on 0 while ring numbers is based on 1
-        if (agent != NULL_KEY)
-        {
-
-            vector lookAt = llList2Vector(llGetObjectDetails(agent, [OBJECT_ROT]), 0);
-            vector pos = llList2Vector(targets_pos_list, dest_index) + <0,0,0.8>;
-            pos = pos + llList2Vector(llGetObjectDetails(agent, [OBJECT_POS]), 0) - llGetRootPosition();
-            messageTo(ring_id, "teleport", [(string)(index + 1), (string)agent, type, target, (string)pos , (string)lookAt]); //* send mesage to incoming
-        }
-    }
-}
-
-finish()
-{
-    llSetLinkPrimitiveParams(nInternalRing, [PRIM_OMEGA, <0, 0, 0>, PI, 1.0]);
-    //* we need this trick to reset rotation
-    llSetLinkPrimitiveParams(nInternalRing, [PRIM_ROTATION, llEuler2Rot(<0, 0, -180 * DEG_TO_RAD>)]);
-    llSetLinkPrimitiveParams(nInternalRing, [PRIM_ROTATION, llEuler2Rot(<0, 0, 0>)]);
-
-    llSetLinkAlpha(2,1.0,ALL_SIDES); //* show main ring base
-    if (started) {
-        llSetColor(old_face_color, glow_face);
-    }
-    llSetPrimitiveParams([PRIM_GLOW, glow_face, 0.00, PRIM_FULLBRIGHT, glow_face, FALSE]); //* deactivate glow
-    dest_index = -1;
-    cur_index = 0;
-    //avatars_list = []; nop
-    started = FALSE;
-    llSetTimerEvent(ring_idle_time);
-}
-
 clear(){
-    cur_index = 0;
     targets_type_list = [];
     targets_list = [];
     targets_pos_list = [];
@@ -266,9 +258,11 @@ default
             llOwnerSay("Could not find InternalRing");
         llSetLinkPrimitiveParams(nInternalRing, [PRIM_OMEGA, <0, 0, 0>, 0, 1.0]);
         if (channel_number == 0)
-            channel_number = (((integer)("0x"+llGetSubString((string)llGetOwner(),-8,-1)) & 0x3FFFFFFF) ^ 0xBFFFFFFF ) + channel_private_number;
+        {
+            key id = llList2Key(llGetObjectDetails(llGetKey(), [OBJECT_GROUP]),0);
+             channel_number = (((integer)("0x"+llGetSubString((string)id,-8,-1)) & 0x3FFFFFFF) ^ 0xBFFFFFFF ) + channel_private_number;
+        }
         llListen(channel_number, "", NULL_KEY, "");
-        //llOwnerSay((string)channel_id);
         update();
         regionAgents = llGetAgentList(AGENT_LIST_REGION, []);
         llSetTimerEvent(ring_idle_time);
@@ -308,18 +302,31 @@ default
                 avatars_list += k;
             }
 
-            start(number_detected);
             if (llList2String(targets_type_list, dest_index) == "gate")
                 sendCommandTo(llList2Key(targets_list, dest_index), "activate", []); //* send mesage to incoming
-            llSleep(ring_total_time / 2);
+            start(number_detected);
         }
         else
             llSay(0, "Nothing to teleport");
     }
 
-    no_sensor(){
+    no_sensor()
+    {
         finish();
         llSay(0, "Nothing to teleport");
+    }
+
+    object_rez(key id)
+    {
+        if (dest_index>=0)
+        {
+            if (llGetListLength(avatars_list)>0)
+            {
+                key agent = llList2Key(avatars_list, 0);
+                avatars_list = llDeleteSubList(avatars_list, 0, 0);
+                teleport(id, agent);
+            }
+        }
     }
 
     timer()
@@ -347,16 +354,6 @@ default
                     start(0);
                 }
             }
-        }
-    }
-
-    object_rez(key id)
-    {
-        if (dest_index>=0)
-        {
-            llSleep(0.1);
-            teleport(id, cur_index);
-            cur_index++;
         }
     }
 
