@@ -3,9 +3,9 @@
     @description:
 
     @author: Zai Dium
-    @updated: "2023-05-23 01:01:53"
+    @updated: "2023-05-24 15:57:25"
     @version: 3.1
-    @revision: 294
+    @revision: 297
     @localfile: ?defaultpath\Stargate\?@name.lsl
     @license: MIT
 
@@ -109,26 +109,26 @@ default
         //llOwnerSay("rez"+(string)param);
         //osGrantScriptPermissions(llGetOwner(), ["osTeleportAgent"]);
         llVolumeDetect(TRUE);
-        llSetPrimitiveParams([PRIM_TEMP_ON_REZ, TRUE]);
-        if (param != 0)
+        if (param != 0) //* rezzed from Stargate
         {
+            llSetPrimitiveParams([PRIM_TEMP_ON_REZ, TRUE]);
             llTargetOmega(llRot2Up(llGetLocalRot()), PI, 2.0);
             rez_owner = osGetRezzingObject();
             ring_number = param;
             //llSetObjectDesc((string)param); //* because not saved to `listen` scope :(
             llSetObjectName("Ring"+(string)param);
+            //ring_number = (integer)llGetObjectDesc();
+            if (ring_number < 0)
+            {
+                ring_number = -ring_number; //* based on 1 not 0, zero make bug diveded
+                dieRing = TRUE;
+            }
+            else
+                dieRing = FALSE;
+
+            raise();
         }
 
-        //ring_number = (integer)llGetObjectDesc();
-        if (ring_number < 0)
-        {
-            ring_number = -ring_number; //* based on 1 not 0, zero make bug diveded
-            dieRing = TRUE;
-        }
-        else
-            dieRing = FALSE;
-
-        raise();
     }
 
     collision_start(integer num)

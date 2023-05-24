@@ -31,14 +31,31 @@ If you like, put GateSound sound file in Gate prim for starting, and put RingSou
 
 ### Buildup ###
 
-From Belnder export Stargate, InternalRing in one export file
-export Ring to another file
+From Belnder export Stargate, InternalRing in one export file Stargate.dae
+export Ring to Ring.dae
+export Hull to Hull.dae
 
 You need
 
-* External Ring, as root object that have script set physic shape to `Prim`
-* Internal Ring, name it as "InternalRing" to rotate it linked to the root, set Phsyic shape to `none`
-* Ring inside inventory of External ring, with name "Ring" set it to `Phantom`, make it glow and alpha 10
+* Import dae files, import Chevrons.png as texture
+
+* Import GateSound.wav, RingSound.wav
+
+* Rez `Stargate`, ensure the external ring as root object (relink if needed), that have scripts, set physic shape to `Prim`, upload Gate.lsl into it, set chevrons face to Chevrons texture.
+
+* Name internal ring `InternalRing`, script need it to rotate, ensure it linked to the root, set Phsyic shape to `none`.
+
+* Put * GateSound.wav in `Stargate`
+
+* Color it as you like
+
+* Rez `Ring`, set it to `Phantom`, make it glow 0.2 and alpha 70, color #b2e2e2
+
+* Put * RingSound.wav in `Ring`
+
+* Take/Copy Ring prim to inventory, copy it into Stargate, name it `Ring`
+
+* Create notecard inside Stargate, name it `Targets`
 
 ### License ###
 
