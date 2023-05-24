@@ -3,8 +3,8 @@
     @description:
 
     @author: Zai Dium
-    @updated: "2023-05-24 17:08:29"
-    @revision: 399
+    @updated: "2023-05-24 17:22:04"
+    @revision: 410
     @version: 3.1
     @localfile: ?defaultpath\Stargate\?@name.lsl
     @license: MIT
@@ -32,9 +32,11 @@ integer version = 290; //* 2.9
 string hyperPrefix=">";
 
 integer glow_face = 0;
+
 integer ring_count = 5; //* amount of rings to rez and teleport
-float ring_total_time = 5;
 float sensor_range = 2;
+float ring_total_time = 5; //*seconds
+float ring_idle_time = 3; //*seconds
 
 list menu_list = [ "<--", "Refresh", "-->" ]; //* general navigation
 
@@ -55,6 +57,7 @@ integer cur_page; //* current menu page
 key update_id;
 
 vector old_face_color;
+list regionAgents;
 
 key notecardQueryId;
 integer notecardLine;
@@ -209,6 +212,7 @@ finish()
     cur_index = 0;
     //avatars_list = []; nop
     started = FALSE;
+    llSetTimerEvent(ring_idle_time);
 }
 
 clear(){
@@ -266,6 +270,8 @@ default
         llListen(channel_number, "", NULL_KEY, "");
         //llOwnerSay((string)channel_id);
         update();
+        regionAgents = llGetAgentList(AGENT_LIST_REGION, []);
+        llSetTimerEvent(ring_idle_time);
     }
 
     on_rez(integer start_param )
@@ -317,8 +323,30 @@ default
 
     timer()
     {
-        llSetTimerEvent(0);
-        finish();
+        if (started)
+        {
+            finish();
+        }
+        else
+        {
+            regionAgents = llGetAgentList(AGENT_LIST_REGION, []);
+        }
+    }
+
+    collision_start( integer num_detected )
+    {
+        if (!started)
+        {
+            key agent = llDetectedKey(0);
+            if (agent != NULL_KEY)
+            {
+                if (llListFindList(regionAgents, [agent])<0)
+                {
+                    regionAgents = llGetAgentList(AGENT_LIST_REGION, []);
+                    start(0);
+                }
+            }
+        }
     }
 
     object_rez(key id)
@@ -495,7 +523,6 @@ default
             {
                 dest_index = button_index;
                 llSensor("", NULL_KEY, AGENT, sensor_range, PI);
-                llSetTimerEvent(ring_total_time);
             }
         }
     }
