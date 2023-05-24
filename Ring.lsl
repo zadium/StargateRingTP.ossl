@@ -3,9 +3,9 @@
     @description:
 
     @author: Zai Dium
-    @updated: "2023-05-24 15:57:25"
+    @updated: "2023-05-24 17:10:17"
     @version: 3.1
-    @revision: 297
+    @revision: 303
     @localfile: ?defaultpath\Stargate\?@name.lsl
     @license: MIT
 
@@ -50,7 +50,7 @@ sound(){
 
 teleport()
 {
-    //llOwnerSay("teleporting: "+(string)agent+" "+toTarget);
+    //llOwnerSay("teleporting: "+(string)agent+" target"+toTarget+" pos:"+(string)toPos);
     if (toTarget == "")
     {
         osLocalTeleportAgent(agent, toPos, ZERO_VECTOR, toLookAt, OS_LTPAG_USELOOKAT);
