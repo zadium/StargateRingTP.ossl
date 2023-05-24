@@ -3,8 +3,8 @@
     @description:
 
     @author: Zai Dium
-    @updated: "2023-05-24 17:22:04"
-    @revision: 410
+    @updated: "2023-05-24 17:29:25"
+    @revision: 413
     @version: 3.1
     @localfile: ?defaultpath\Stargate\?@name.lsl
     @license: MIT
@@ -372,10 +372,13 @@ default
                 while (i<c)
                 {
                     name = llGetInventoryName(INVENTORY_LANDMARK, i);
-                    targets_name_list += "*" + name;
-                    targets_type_list += "lm";
-                    targets_list += name; //llGetInventoryKey(name);
-                    targets_pos_list += ZERO_VECTOR;
+                    if (llToLower(name) != llToLower(llGetObjectDesc()))
+                    {
+                        targets_name_list += "*" + name;
+                        targets_type_list += "lm";
+                        targets_list += name; //llGetInventoryKey(name);
+                        targets_pos_list += ZERO_VECTOR;
+                    }
                     i++;
                 }
                 sendCommand("update", [update_id, version]);
@@ -457,10 +460,13 @@ default
                     if (region == ".")
                         region = "";
                     //llOwnerSay("name="+ name + " region="+region+" pos="+(string)pos);
-                    targets_list += region;
-                    targets_pos_list += pos;
-                    targets_name_list += hyperPrefix + name;
-                    targets_type_list += "region";
+                    if ((name == "") || ((llToLower(name) != llToLower(llGetObjectDesc()))))
+                    {
+                        targets_list += region;
+                        targets_pos_list += pos;
+                        targets_name_list += hyperPrefix + name;
+                        targets_type_list += "region";
+                    }
                 }
                 ++notecardLine;
                 notecardQueryId = llGetNotecardLine(notecardName, notecardLine); //Query the dataserver for the next notecard line.

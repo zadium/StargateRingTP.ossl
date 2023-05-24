@@ -9,6 +9,7 @@ I built it from scratch the code and the mesh too, with better solution, I used 
 Works in one region by adding multiple gates, it is auto detect other gates by names,
 for cross regions, add a notecard inside "Targets" use the same url in Firestorm viewer like
 
+    myname=hop://hg.mygrid.com:8000/My Region/128/64/25
     hop://hg.mygrid.com:8000/My Region/128/64/25
     hg.mygrid.com:8000/My Region/128/64/25
     /My Region/128/64/25
@@ -21,11 +22,15 @@ do not use simicolone : for region links seperator
 
     hg.mygrid.com:8000:My Region/128/64/25  wrong
 
-Some of grid dose not allow hyper teleport or between regions, you can ask your admin to enabled it for you.
+If url name have name as description it ignore the url
+
+You can use url postion that have stargate at this point, so that target gate in another sim will rez rings as welcoming.
+
+Some of grids dose not allow hyper teleport (osTeleportAgent) or between regions, you can ask your admin to enabled it for you.
 
 ### Setup ###
 
-Easy, rez it , change the description, after rezzing all rings, click `Refresh` in menu, enjoy.
+Easy, rez it , change the description for name it, after rezzing all rings, click `Refresh` in menu, enjoy.
 You need refresh button only at then end of setup, or after renaming it in description.
 If you like, put GateSound sound file in Gate prim for starting, and put RingSound file in Ring object inside the gate, or it use default sounds
 
