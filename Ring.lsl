@@ -3,9 +3,9 @@
     @description:
 
     @author: Zai Dium
-    @updated: "2023-05-24 18:52:10"
+    @updated: "2023-05-25 01:18:09"
     @version: 3.1
-    @revision: 305
+    @revision: 309
     @localfile: ?defaultpath\Stargate\?@name.lsl
     @license: MIT
 
@@ -159,25 +159,21 @@ default
             if (cmd == "teleport")
             {
                 //* only not temp rings
-                integer number = llList2Integer(params, 0);
-                if (number == ring_number)
+                agent = llList2Key(params, 0);
+                if (agent != NULL_KEY)
                 {
-                    agent = llList2Key(params, 1);
-                    if (agent != NULL_KEY)
+                    toType = llToLower(llList2String(params, 1));
+                    toTarget = llList2String(params, 2);
+                    toPos = llList2Vector(params, 3);
+                    toLookAt = llList2Vector(params, 4);
+                    if (agent == llGetOwner())
+                    //if ((toTarget =="") || (agent == llGetOwner()))
                     {
-                        toType = llToLower(llList2String(params, 2));
-                        toTarget = llList2String(params, 3);
-                        toPos = llList2Vector(params, 4);
-                        toLookAt = llList2Vector(params, 5);
-                        if ((agent == llGetOwner()) || (llGetPermissions() & PERMISSION_TELEPORT))
-                        //if ((toTarget =="") || (agent == llGetOwner()))
-                        {
-                            teleport();
-                        }
-                        else
-                        {
-                            llRequestPermissions(agent, PERMISSION_TELEPORT);
-                        }
+                        teleport();
+                    }
+                    else
+                    {
+                        llRequestPermissions(agent, PERMISSION_TELEPORT);
                     }
                 }
             }
