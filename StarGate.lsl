@@ -3,8 +3,8 @@
     @description:
 
     @author: Zai Dium
-    @updated: "2023-05-23 00:47:27"
-    @revision: 387
+    @updated: "2023-05-24 17:08:29"
+    @revision: 399
     @version: 3.1
     @localfile: ?defaultpath\Stargate\?@name.lsl
     @license: MIT
@@ -278,6 +278,11 @@ default
         if ((change & CHANGED_REGION_START) || (change & CHANGED_OWNER)) {
             llResetScript();
         }
+        else if (change & CHANGED_INVENTORY)
+        {
+            update();
+            finish();
+        }
     }
 
     touch_start(integer num_detected)
@@ -360,11 +365,13 @@ default
                     integer p = llSubStringIndex(data, "=");
                     if (p>=0) {
                         name = llGetSubString(data, 0, p - 1);
-                        data = llGetSubString(data, p+1, -1);
+                        data = llGetSubString(data, p + 1, -1);
                     }
 
                     if (llToLower(llGetSubString(data, 0, 5)) == "hop://")
-                        data = llGetSubString(data, 6, p - 1); //* remove hop
+                    {
+                        data = llGetSubString(data, 6, -1); //* remove hop
+                    }
 
                     p = llSubStringIndex(data, "/");
                     if (p==0) {
