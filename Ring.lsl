@@ -3,9 +3,9 @@
     @description:
 
     @author: Zai Dium
-    @updated: "2023-05-24 17:10:17"
+    @updated: "2023-05-24 18:52:10"
     @version: 3.1
-    @revision: 303
+    @revision: 305
     @localfile: ?defaultpath\Stargate\?@name.lsl
     @license: MIT
 
@@ -142,6 +142,10 @@ default
         {
             teleport();
         }
+        else
+            dieRing = TRUE; //* if timer still working
+            if (isFinished)
+                setTimer();
     }
 
     dataserver( key queryid, string data )

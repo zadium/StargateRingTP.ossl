@@ -3,8 +3,8 @@
     @description:
 
     @author: Zai Dium
-    @updated: "2023-05-24 17:29:25"
-    @revision: 413
+    @updated: "2023-05-24 18:53:13"
+    @revision: 437
     @version: 3.1
     @localfile: ?defaultpath\Stargate\?@name.lsl
     @license: MIT
@@ -27,7 +27,7 @@ string defaultSound = "289b4a8d-5a9a-4cc3-8077-3d3e5b08bb8c";
 //string ring_start_sound = " ddb8a14d-624a-4da2-861c-8feedd9c9195"; //*
 //*
 
-integer version = 290; //* 2.9
+integer version = 310; //* version
 
 string hyperPrefix=">";
 
@@ -258,8 +258,8 @@ default
             soundid = defaultSound;
 
         list box = llGetBoundingBox(llGetKey());
-        vector size = llList2Vector(box, 1) * llGetRot() - llList2Vector(box, 0) * llGetRot();
-        sensor_range = ((size.x + size.y) / 2) / 2 + 0.2; //* avarage / 2
+        vector size = llList2Vector(box, 1) - llList2Vector(box, 0);
+        sensor_range = ((size.x + size.y) / 2) / 2; //* avarage / 2
 
         nInternalRing = getPrimNumber(InternalRingName);
         if (!nInternalRing)
@@ -319,6 +319,7 @@ default
 
     no_sensor(){
         finish();
+        llSay(0, "Nothing to teleport");
     }
 
     timer()
@@ -353,6 +354,7 @@ default
     {
         if (dest_index>=0)
         {
+            llSleep(0.1);
             teleport(id, cur_index);
             cur_index++;
         }
@@ -476,7 +478,7 @@ default
 
     listen (integer channel, string name, key id, string message)
     {
-        //llOwnerSay((string)id+":"+message);
+        //llSay(0,(string)channel+":"+message);
         if (channel == channel_number)
         {
             list params = llParseStringKeepNulls(message,[";"],[""]);
