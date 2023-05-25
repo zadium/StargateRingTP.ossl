@@ -3,8 +3,8 @@
     @description:
 
     @author: Zai Dium
-    @updated: "2023-05-25 20:20:50"
-    @revision: 478
+    @updated: "2023-05-25 20:55:11"
+    @revision: 487
     @version: 3.1
     @localfile: ?defaultpath\Stargate\?@name.lsl
     @license: MIT
@@ -12,7 +12,7 @@
     @ref:
         https://www.101soundboards.com/boards/33269-stargate-sg1-soundboard
 
-    @notice: Based on idea "APN Ring Transporters (OSGrid/OpenSim) by Spectre Draconia and author: Warin Cascabel, April 2009"
+    @notice: Based on idea Stargate Movie, and "APN Ring Transporters (OSGrid/OpenSim) by Spectre Draconia and author: Warin Cascabel, April 2009"
 */
 
 //* User Setting
@@ -172,10 +172,9 @@ endEffects()
 {
     llSetLinkPrimitiveParams(nInternalRing, [PRIM_OMEGA, <0, 0, 0>, PI, 1.0]);
     //* we need this trick to reset rotation
-    llSetLinkPrimitiveParams(nInternalRing, [PRIM_ROTATION, llEuler2Rot(<0, 0, -180 * DEG_TO_RAD>)]);
+    llSetLinkPrimitiveParams(nInternalRing, [PRIM_ROTATION, llEuler2Rot(<0, 0, -180 * DEG_TO_RAD>)]); //* forces to take action for next line
     llSetLinkPrimitiveParams(nInternalRing, [PRIM_ROTATION, llEuler2Rot(<0, 0, 0>)]);
-    llSetColor(old_face_color, glow_face);
-    llSetPrimitiveParams([PRIM_GLOW, glow_face, 0.00, PRIM_FULLBRIGHT, glow_face, FALSE]); //* deactivate glow
+    llSetPrimitiveParams([PRIM_COLOR, glow_face, old_face_color, 1, PRIM_GLOW, glow_face, 0.00, PRIM_FULLBRIGHT, glow_face, FALSE]); //* deactivate glow
 }
 
 finish()
@@ -190,8 +189,7 @@ startEffects()
 {
     llSetLinkPrimitiveParams(nInternalRing, [PRIM_OMEGA, llRot2Up(llGetLocalRot()), PI, 1.0]);
     old_face_color = llGetColor(glow_face);
-    llSetColor(<255, 255, 255>, glow_face);
-    llSetPrimitiveParams([PRIM_GLOW, glow_face, 0.20, PRIM_FULLBRIGHT, glow_face, TRUE]); //* glow face
+    llSetPrimitiveParams([PRIM_COLOR, glow_face, <255, 255, 255>, 1, PRIM_GLOW, glow_face, 0.20, PRIM_FULLBRIGHT, glow_face, TRUE]); //* glow face
 }
 
 start(integer agents_count)
@@ -240,6 +238,12 @@ clearGates()
 }
 
 update(){
+    if (channel_number == 0)
+    {
+        key id = llList2Key(llGetObjectDetails(llGetKey(), [OBJECT_GROUP]),0);
+        channel_number = (((integer)("0x"+llGetSubString((string)id,-8,-1)) & 0x3FFFFFFF) ^ 0xBFFFFFFF ) + channel_private_number;
+    }
+    llListen(channel_number, "", NULL_KEY, "");
     clear();
     readNotecard();
     //* when finish read notecard we send to other gates
@@ -281,12 +285,6 @@ default
         if (!nInternalRing)
             llOwnerSay("Could not find InternalRing");
         llSetLinkPrimitiveParams(nInternalRing, [PRIM_OMEGA, <0, 0, 0>, 0, 1.0]);
-        if (channel_number == 0)
-        {
-            key id = llList2Key(llGetObjectDetails(llGetKey(), [OBJECT_GROUP]),0);
-             channel_number = (((integer)("0x"+llGetSubString((string)id,-8,-1)) & 0x3FFFFFFF) ^ 0xBFFFFFFF ) + channel_private_number;
-        }
-        llListen(channel_number, "", NULL_KEY, "");
         update();
         regionAgents = llGetAgentList(AGENT_LIST_REGION, []);
         llSetTimerEvent(ring_idle_time);
@@ -297,7 +295,7 @@ default
         llResetScript();
     }
 
-    changed (integer change)
+    changed(integer change)
     {
         if ((change & CHANGED_REGION_START) || (change & CHANGED_OWNER)) {
             llResetScript();
