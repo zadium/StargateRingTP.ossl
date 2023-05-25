@@ -2,13 +2,15 @@
 
 Ground ring to teleport multiple avatars (only 5) without sitting, to another position in the same region or another region via notecard "Targets"
 
-Idea is based on "APN Ring Transporters (OSGrid/OpenSim) by Spectre Draconia and author: Warin Cascabel, April 2009"
+Idea is based Stargate Movie, and "APN Ring Transporters (OSGrid/OpenSim) by Spectre Draconia and author: Warin Cascabel, April 2009" (just an Idea)
 
 I built it from scratch the code and the mesh too, with better solution, I used sensor to catch avatars, then rezzing a ring and send a message to that ring to teleport one avatar to the new position.
 
 Works in one region by adding multiple gates, it is auto detect other gates by names,
-for cross regions, add a notecard inside "Targets" use the same url in Firestorm viewer like
+for cross regions, add a notecard inside "Targets" use the same url in Firestorm viewer like, for fun make sure region positions you have stargate there at same point stargate will show rings too when someone landing.
 
+Target notecard
+```
     myname=hop://hg.mygrid.com:8000/My Region/128/64/25
     hop://hg.mygrid.com:8000/My Region/128/64/25
     hg.mygrid.com:8000/My Region/128/64/25
@@ -17,22 +19,20 @@ for cross regions, add a notecard inside "Targets" use the same url in Firestorm
     /./128/64/25
     ./128/64/25
     #hg.mygrid.com:8000/My Region/128/64/25     it is commented
+``
 
 do not use simicolone : for region links seperator
 
-    hg.mygrid.com:8000:My Region/128/64/25  wrong
+    hg.mygrid.com:8000:My Region/128/64/25  is wrong
 
-If url name have name as description it ignore the url
+If url name have name as description it ignore the url line
 
-You can use url postion that have stargate at this point, so that target gate in another sim will rez rings as welcoming.
-
-Some of grids dose not allow hyper teleport (osTeleportAgent) or between regions, you can ask your admin to enabled it for you.
+Some of grids dose not allow hyper teleport (osTeleportAgent) or between regions or just for parcel owner, you can ask your admin to enabled it for you.
 
 ### Setup ###
 
 Easy, rez it , change the description for name it, after rezzing all rings, click `Refresh` in menu, enjoy.
 You need refresh button only at then end of setup, or after renaming it in description.
-If you like, put GateSound sound file in Gate prim for starting, and put RingSound file in Ring object inside the gate, or it use default sounds
 
 ### Buildup ###
 
