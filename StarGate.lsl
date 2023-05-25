@@ -3,8 +3,8 @@
     @description:
 
     @author: Zai Dium
-    @updated: "2023-05-25 01:25:59"
-    @revision: 469
+    @updated: "2023-05-25 20:20:50"
+    @revision: 478
     @version: 3.1
     @localfile: ?defaultpath\Stargate\?@name.lsl
     @license: MIT
@@ -57,7 +57,6 @@ integer cur_page; //* current menu page
 
 key update_id;
 
-vector old_face_color;
 list regionAgents;
 
 key notecardQueryId;
@@ -167,31 +166,38 @@ teleport(key ring_id, key agent)
     }
 }
 
-finish()
+vector old_face_color;
+
+endEffects()
 {
     llSetLinkPrimitiveParams(nInternalRing, [PRIM_OMEGA, <0, 0, 0>, PI, 1.0]);
     //* we need this trick to reset rotation
     llSetLinkPrimitiveParams(nInternalRing, [PRIM_ROTATION, llEuler2Rot(<0, 0, -180 * DEG_TO_RAD>)]);
     llSetLinkPrimitiveParams(nInternalRing, [PRIM_ROTATION, llEuler2Rot(<0, 0, 0>)]);
-
-    llSetLinkAlpha(2,1.0,ALL_SIDES); //* show main ring base
-    if (started) {
-        llSetColor(old_face_color, glow_face);
-    }
+    llSetColor(old_face_color, glow_face);
     llSetPrimitiveParams([PRIM_GLOW, glow_face, 0.00, PRIM_FULLBRIGHT, glow_face, FALSE]); //* deactivate glow
+}
+
+finish()
+{
     //dest_index = -1; nop
     started = FALSE;
+    endEffects();
     llSetTimerEvent(ring_idle_time);
+}
+
+startEffects()
+{
+    llSetLinkPrimitiveParams(nInternalRing, [PRIM_OMEGA, llRot2Up(llGetLocalRot()), PI, 1.0]);
+    old_face_color = llGetColor(glow_face);
+    llSetColor(<255, 255, 255>, glow_face);
+    llSetPrimitiveParams([PRIM_GLOW, glow_face, 0.20, PRIM_FULLBRIGHT, glow_face, TRUE]); //* glow face
 }
 
 start(integer agents_count)
 {
-    llSetLinkPrimitiveParams(nInternalRing, [PRIM_OMEGA, llRot2Up(llGetLocalRot()), PI, 1.0]);
-
-    old_face_color = llGetColor(glow_face);
     started = TRUE;
-    llSetColor(<255, 255, 255>, glow_face);
-    llSetPrimitiveParams([PRIM_GLOW, glow_face, 0.20, PRIM_FULLBRIGHT, glow_face, TRUE]); //* glow face
+    startEffects();
     sound();
     vector pos = llGetPos() - <0,0,0.1>;
     integer ringNumber;
@@ -209,10 +215,28 @@ start(integer agents_count)
 }
 
 clear(){
-    targets_type_list = [];
     targets_list = [];
+    targets_type_list = [];
     targets_pos_list = [];
     targets_name_list = [];
+}
+
+clearGates()
+{
+    integer c = llGetListLength(targets_list);
+    integer i = 0;
+    while (i<c)
+    {
+        if (llList2String(targets_type_list, i) == "gate")
+        {
+            targets_list = llDeleteSubList(targets_list, i, i);
+            targets_type_list = llDeleteSubList(targets_type_list, i, i);
+            targets_pos_list = llDeleteSubList(targets_pos_list, i, i);
+            targets_name_list = llDeleteSubList(targets_name_list, i, i);
+        }
+        else
+            i++;
+    }
 }
 
 update(){
@@ -487,7 +511,7 @@ default
             {
                 if (update_id != llList2Key(params, 0))
                 {
-                    clear();
+                    clearGates();
                     update_id = llList2Key(params, 0);
                     sendCommand("update", [update_id, version]); //* send pong reply (ring sync)
                 }
@@ -520,7 +544,9 @@ default
                     cur_page += 1;
                 showDialog(id);
             }
-            else if (message == "Refresh") {
+            else if (message == "Refresh")
+            {
+                startEffects();
                 update();
                 finish();
             }
