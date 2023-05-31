@@ -19,7 +19,7 @@ Target notecard
     /./128/64/25
     ./128/64/25
     #hg.mygrid.com:8000/My Region/128/64/25     it is commented
-``
+```
 
 do not use simicolone : for region links seperator
 
@@ -64,7 +64,7 @@ You need
 
 ### License ###
 
-https://opensource.org/licenses/MPL
+[Mozilla Public License Version 2.0](https://www.mozilla.org/en-US/MPL/2.0/).
 
 ### Open source ###
 
