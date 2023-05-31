@@ -3,8 +3,8 @@
     @description:
 
     @author: Zai Dium
-    @updated: "2023-05-25 20:55:11"
-    @revision: 487
+    @updated: "2023-05-31 23:56:54"
+    @revision: 511
     @version: 3.1
     @localfile: ?defaultpath\Stargate\?@name.lsl
     @license: MIT
@@ -54,8 +54,6 @@ integer dest_index = -1; //* selected dest object index
 integer dialog_channel = -1;
 integer dialog_listen_id; //* dynamicly generated menu channel
 integer cur_page; //* current menu page
-
-key update_id;
 
 list regionAgents;
 
@@ -368,7 +366,7 @@ default
         if (!started)
         {
             key agent = llDetectedKey(0);
-            if (agent != NULL_KEY)
+            if ((agent != NULL_KEY) && (llGetOwnerKey(agent) == agent)) //* is an avatar
             {
                 if (llListFindList(regionAgents, [agent])<0)
                 {
@@ -386,7 +384,6 @@ default
             if (data == EOF) //Reached end of notecard (End Of File).
             {
                 notecardQueryId = NULL_KEY;
-                update_id = llGenerateKey();
                 integer c = llGetInventoryNumber(INVENTORY_LANDMARK);
                 integer i = 0;
                 string name;
@@ -402,7 +399,7 @@ default
                     }
                     i++;
                 }
-                sendCommand("update", [update_id, version]);
+                sendCommand("update", [version]);
             }
             else
             {
@@ -505,15 +502,13 @@ default
             params = llDeleteSubList(params, 0, 0);
 
             //* gates
-            if (cmd == "update")
-            {
-                if (update_id != llList2Key(params, 0))
-                {
-                    clearGates();
-                    update_id = llList2Key(params, 0);
-                    sendCommand("update", [update_id, version]); //* send pong reply (ring sync)
-                }
+            if (cmd == "add")
                 addGate(id);
+            else if (cmd == "update")
+            {
+                clearGates();
+                addGate(id);
+                sendCommand("add", [version]); //* send pong reply (ring sync)
             }
             else if (cmd == "activate")
             {
@@ -551,7 +546,8 @@ default
             else if (button_index != -1)
             {
                 dest_index = button_index;
-                llSensor("", NULL_KEY, AGENT, sensor_range, PI);
+                //* ACTIVE | AGENT i used ACTIVE to detect tiny avatars, ada avatars
+                llSensor("", NULL_KEY, ACTIVE | AGENT, sensor_range, PI);
             }
         }
     }
