@@ -3,9 +3,9 @@
     @description:
 
     @author: Zai Dium
-    @updated: "2023-05-25 01:18:09"
+    @updated: "2024-09-24 01:04:14"
     @version: 3.1
-    @revision: 309
+    @revision: 322
     @localfile: ?defaultpath\Stargate\?@name.lsl
     @license: MIT
 
@@ -58,6 +58,7 @@ teleport()
     else
     {
         //llTeleportAgent(agent, toTarget, toPos, toLookAt);
+        //* Need OSSL permission
         osTeleportAgent(agent, toTarget, toPos, toLookAt);
     }
 
@@ -97,6 +98,8 @@ raise()
     }
 }
 
+integer ring_channel = 100;
+
 default
 {
     state_entry()
@@ -114,6 +117,7 @@ default
             llSetPrimitiveParams([PRIM_TEMP_ON_REZ, TRUE]);
             llTargetOmega(llRot2Up(llGetLocalRot()), PI, 2.0);
             rez_owner = osGetRezzingObject();
+            llListen(ring_channel, "", rez_owner, "");
             ring_number = param;
             //llSetObjectDesc((string)param); //* because not saved to `listen` scope :(
             llSetObjectName("Ring"+(string)param);
@@ -148,12 +152,12 @@ default
                 setTimer();
     }
 
-    dataserver( key queryid, string data )
+    listen(integer channel, string name, key id, string message)
     {
         //llOwnerSay("data: "+data);
         if (ring_number > 0)
         {
-            list params = llParseStringKeepNulls(data,[";"],[""]);
+            list params = llParseStringKeepNulls(message,[";"],[""]);
             string cmd = llList2String(params,0);
             params = llDeleteSubList(params, 0, 0);
             if (cmd == "teleport")
@@ -174,6 +178,7 @@ default
                     else
                     {
                         llRequestPermissions(agent, PERMISSION_TELEPORT);
+                        llRegionSayTo(agent, 0, "To teleport please accept request permissions");
                     }
                 }
             }

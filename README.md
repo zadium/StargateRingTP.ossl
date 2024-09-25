@@ -1,6 +1,6 @@
 ## Opensource Stargate ring teleporter ##
 
-Ground ring to teleport multiple avatars (only 5) without sitting, to another position in the same region or another region via notecard "Targets"
+Ground ring to teleport multiple avatars (only 5) without sitting (Stargate name is in description), to another position in the same region or another region via notecard "Targets"
 
 Idea is based Stargate Movie, and "APN Ring Transporters (OSGrid/OpenSim) by Spectre Draconia and author: Warin Cascabel, April 2009" (just an Idea)
 
@@ -21,7 +21,7 @@ Target notecard
     #hg.mygrid.com:8000/My Region/128/64/25     it is commented
 ```
 
-do not use simicolone : for region links seperator
+**Do not** use simicolone : for region links seperator
 
     hg.mygrid.com:8000:My Region/128/64/25  is wrong
 
@@ -37,10 +37,8 @@ You need refresh button only at then end of setup, or after renaming it in descr
 ### Buildup ###
 
 From Belnder export Stargate, InternalRing in one export file Stargate.dae
-export Ring to Ring.dae
-export Hull to Hull.dae
 
-You need
+Steps
 
 * Import dae files, import Chevrons.png as texture
 
@@ -50,13 +48,13 @@ You need
 
 * Name internal ring `InternalRing`, script need it to rotate, ensure it linked to the root, set Phsyic shape to `none`.
 
-* Put * GateSound.wav in `Stargate`
+* Put GateSound.wav in `Stargate`
 
 * Color it as you like
 
 * Rez `Ring`, set it to `Phantom`, make it glow 0.2 and alpha 70, color #b2e2e2
 
-* Put * RingSound.wav in `Ring`
+* Put RingSound.wav in `Ring`
 
 * Take/Copy Ring prim to inventory, copy it into Stargate, name it `Ring`
 
@@ -64,7 +62,7 @@ You need
 
 ### License ###
 
-[Mozilla Public License Version 2.0](https://www.mozilla.org/en-US/MPL/2.0/).
+[CC BY-NC 4.0](https://creativecommons.org/licenses/by-nc/4.0/deed.en)
 
 ### Open source ###
 
