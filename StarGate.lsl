@@ -3,9 +3,9 @@
     @description:
 
     @author: Zai Dium
-    @updated: "2023-05-31 23:56:54"
-    @revision: 511
-    @version: 3.1
+    @updated: "2024-09-24 15:46:03"
+    @revision: 588
+    @version: 3.58
     @localfile: ?defaultpath\Stargate\?@name.lsl
     @license: MIT
 
@@ -17,6 +17,7 @@
 
 //* User Setting
 integer channel_private_number = 1;
+integer ring_channel = 100;
 
 string InternalRingName = "InternalRing";
 string notecardName = "Targets";
@@ -43,7 +44,7 @@ list menu_list = [ "<--", "Refresh", "-->" ]; //* general navigation
 float sensor_range = 2;//* we change in entry, depend on size of prim
 key soundid;
 
-list targets_type_list = []; //* gates list types lm, gate, region
+list targets_type_list = []; //* gates list types lm, gate, region, lm is not working yet
 list targets_list = []; //* gate rings keys list
 list targets_pos_list = []; //* gate rings keys list
 list targets_name_list = []; //* gate rings list
@@ -100,7 +101,7 @@ messageTo(key id, string cmd, list params)
     {
         cmd = cmd + ";" + llList2String(params, i);
     }
-    osMessageObject(id, cmd);
+    llRegionSayTo(id, ring_channel, cmd);
 }
 
 sendCommandTo(key id, string cmd, list params)
@@ -123,20 +124,6 @@ sendCommand(string cmd, list params)
 }
 
 //* case sensitive
-integer getPrimNumber(string name)
-{
-    integer c = llGetNumberOfPrims();
-    integer i = 1; //based on 1
-    while(i <= c)
-    {
-        if (llGetLinkName(i) == name) // llGetLinkName based on 1
-            return i;
-        i++;
-    }
-    llOwnerSay("Could not find " + name);
-    return -1;
-}
-
 sound(){
     llTriggerSound(soundid, 1.0);
 }
@@ -156,7 +143,6 @@ teleport(key ring_id, key agent)
     //llOwnerSay("teleport "+(string)ring_id+" "+(string)agent);
     if (agent != NULL_KEY)
     {
-
         vector lookAt = llList2Vector(llGetObjectDetails(agent, [OBJECT_ROT]), 0);
         vector pos = llList2Vector(targets_pos_list, dest_index) + <0,0,0.8>;
         pos = pos + llList2Vector(llGetObjectDetails(agent, [OBJECT_POS]), 0) - llGetRootPosition();
@@ -279,9 +265,9 @@ default
         vector size = llList2Vector(box, 1) - llList2Vector(box, 0);
         sensor_range = ((size.x + size.y) / 2) / 2; //* avarage / 2
 
-        nInternalRing = getPrimNumber(InternalRingName);
-        if (!nInternalRing)
-            llOwnerSay("Could not find InternalRing");
+        nInternalRing = osGetLinkNumber(InternalRingName); //* We will use the root if Internal Ring name not set
+        /*if (!nInternalRing)
+            llOwnerSay("Could not find InternalRing");*/
         llSetLinkPrimitiveParams(nInternalRing, [PRIM_OMEGA, <0, 0, 0>, 0, 1.0]);
         update();
         regionAgents = llGetAgentList(AGENT_LIST_REGION, []);
@@ -353,6 +339,8 @@ default
     {
         if (started)
         {
+            //*TODO: only local
+            llPlaySound("d7a9a565-a013-2a69-797d-5332baa1a947", 1);
             finish();
         }
         else
@@ -552,3 +540,4 @@ default
         }
     }
 }
+
