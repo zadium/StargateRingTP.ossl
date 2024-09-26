@@ -3,9 +3,9 @@
     @description:
 
     @author: Zai Dium
-    @updated: "2024-09-24 01:04:14"
+    @updated: "2024-09-26 17:32:03"
     @version: 3.1
-    @revision: 322
+    @revision: 331
     @localfile: ?defaultpath\Stargate\?@name.lsl
     @license: MIT
 
@@ -16,6 +16,8 @@
 
 //* User Setting
 string ringSound = "RingSound";
+
+integer ask_perm = TRUE;
 
 //*
 string ringDefaultSound = "e6a27da5-6eed-40e7-b57b-e99ac9eb42fe";
@@ -104,6 +106,7 @@ default
 {
     state_entry()
     {
+        ask_perm = llList2Key(llGetParcelDetails(llGetPos(), [PARCEL_DETAILS_OWNER]),0) != llGetOwner();
         llVolumeDetect(TRUE);
     }
 
@@ -111,6 +114,7 @@ default
     {
         //llOwnerSay("rez"+(string)param);
         //osGrantScriptPermissions(llGetOwner(), ["osTeleportAgent"]);
+        ask_perm = llList2Key(llGetParcelDetails(llGetPos(), [PARCEL_DETAILS_OWNER]),0) != llGetOwner();
         llVolumeDetect(TRUE);
         if (param != 0) //* rezzed from Stargate
         {
@@ -170,11 +174,8 @@ default
                     toTarget = llList2String(params, 2);
                     toPos = llList2Vector(params, 3);
                     toLookAt = llList2Vector(params, 4);
-                    if (agent == llGetOwner())
-                    //if ((toTarget =="") || (agent == llGetOwner()))
-                    {
+                    if ((agent == llGetOwner()) || (!ask_perm))
                         teleport();
-                    }
                     else
                     {
                         llRequestPermissions(agent, PERMISSION_TELEPORT);
