@@ -3,8 +3,8 @@
     @description:
 
     @author: Zai Dium
-    @updated: "2024-09-24 15:46:03"
-    @revision: 588
+    @updated: "2024-09-26 17:35:46"
+    @revision: 593
     @version: 3.58
     @localfile: ?defaultpath\Stargate\?@name.lsl
     @license: MIT
@@ -39,8 +39,6 @@ integer ring_count = 5; //* amount of rings to rez and teleport
 float ring_total_time = 5; //*seconds
 float ring_idle_time = 3; //*seconds
 
-list menu_list = [ "<--", "Refresh", "-->" ]; //* general navigation
-
 float sensor_range = 2;//* we change in entry, depend on size of prim
 key soundid;
 
@@ -70,11 +68,19 @@ readNotecard()
     }
 }
 
-list getMenu(integer page)
+list getMenu(key id, integer page)
 {
     //llOwnerSay("page " + (string)page);
     //listList(targets_name_list);
     integer length = llGetListLength(targets_name_list);
+
+    list menu_list;
+
+    if (llGetOwner() == id)
+        menu_list = [ "<--", "Refresh", "-->" ];
+    else
+        menu_list = [ "<--", "---", "-->" ]; //* general navigation
+
     if (length >= 9)
     {
         integer x = page * 9;
@@ -88,7 +94,7 @@ list getMenu(integer page)
 showDialog(key toucher_id)
 {
     dialog_channel = -1 - (integer)("0x" + llGetSubString( (string) llGetKey(), -7, -1) );
-    llDialog(toucher_id, "Ring Gate", getMenu(cur_page), dialog_channel);
+    llDialog(toucher_id, "Ring Gate", getMenu(toucher_id, cur_page), dialog_channel);
     llListenRemove(dialog_listen_id);
     dialog_listen_id = llListen(dialog_channel, "", toucher_id, "");
 }
@@ -527,9 +533,12 @@ default
             }
             else if (message == "Refresh")
             {
-                startEffects();
-                update();
-                finish();
+                if (llGetOwner()==id)
+                {
+                    startEffects();
+                    update();
+                    finish();
+                }
             }
             else if (button_index != -1)
             {
