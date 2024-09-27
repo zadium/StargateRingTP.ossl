@@ -1,6 +1,8 @@
 ## Opensource Stargate ring teleporter ##
 
-Ground ring to teleport multiple avatars (only 5) without sitting (Stargate name is in description), to another position in the same region or another region via notecard "Targets"
+Ground ring to teleport multiple avatars without sitting (Stargate name is in description), to another position in the same region or another region via notecard "Targets"
+
+You can use as landing point, it show rings for forign avatar comming to the grid.
 
 Idea is based Stargate Movie, and "APN Ring Transporters (OSGrid/OpenSim) by Spectre Draconia and author: Warin Cascabel, April 2009" (just an Idea)
 

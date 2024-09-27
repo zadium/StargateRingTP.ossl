@@ -3,9 +3,9 @@
     @description:
 
     @author: Zai Dium
-    @updated: "2024-09-26 17:35:46"
-    @revision: 593
-    @version: 3.58
+    @updated: "2024-09-28 00:35:29"
+    @revision: 729
+    @version: 4
     @localfile: ?defaultpath\Stargate\?@name.lsl
     @license: MIT
 
@@ -17,7 +17,8 @@
 
 //* User Setting
 integer channel_private_number = 1;
-integer ring_channel = 100;
+
+integer ring_channel = 101;
 
 string InternalRingName = "InternalRing";
 string notecardName = "Targets";
@@ -29,15 +30,15 @@ string defaultSound = "289b4a8d-5a9a-4cc3-8077-3d3e5b08bb8c";
 //string ring_start_sound = " ddb8a14d-624a-4da2-861c-8feedd9c9195"; //*
 //*
 
-integer version = 310; //* version
+integer version = 4; //* version
 
 string hyperPrefix=">";
 
 integer glow_face = 0;
 
-integer ring_count = 5; //* amount of rings to rez and teleport
-float ring_total_time = 5; //*seconds
-float ring_idle_time = 3; //*seconds
+integer min_ring_count = 5; //* minimum count of rings to rez and teleport
+float ring_total_time = 5; //* seconds
+float ring_idle_time = 3; //* seconds
 
 float sensor_range = 2;//* we change in entry, depend on size of prim
 key soundid;
@@ -107,6 +108,7 @@ messageTo(key id, string cmd, list params)
     {
         cmd = cmd + ";" + llList2String(params, i);
     }
+    //llOwnerSay("message to: " + cmd);
     llRegionSayTo(id, ring_channel, cmd);
 }
 
@@ -137,7 +139,7 @@ sound(){
 integer nInternalRing = -1;
 integer started = FALSE;
 
-teleport(key ring_id, key agent)
+teleport(integer ring_number, key ring_id, key agent)
 {
     //* only send message to ring (that have number>0) others are temp
     string target;
@@ -147,16 +149,39 @@ teleport(key ring_id, key agent)
     else //* gate
         target = ""; //llGetRegionName();
     //llOwnerSay("teleport "+(string)ring_id+" "+(string)agent);
-    if (agent != NULL_KEY)
+    //* Even agent=NULL_KEY we send command to kill the ring
+    vector lookAt = llList2Vector(llGetObjectDetails(agent, [OBJECT_ROT]), 0);
+    vector pos = llList2Vector(targets_pos_list, dest_index) + <0,0,0.8>;
+    pos = pos + llList2Vector(llGetObjectDetails(agent, [OBJECT_POS]), 0) - llGetRootPosition();
+    messageTo(ring_id, "teleport", [(string)ring_number, (string)agent, type, target, (string)pos , (string)lookAt]); //* send mesage to incoming
+}
+
+teleport_all()
+{
+    integer count = llGetListLength(ring_list);
+    key agent;
+    key ring;
+    integer n;
+    for (n = 1; n <= count; n++)
     {
-        vector lookAt = llList2Vector(llGetObjectDetails(agent, [OBJECT_ROT]), 0);
-        vector pos = llList2Vector(targets_pos_list, dest_index) + <0,0,0.8>;
-        pos = pos + llList2Vector(llGetObjectDetails(agent, [OBJECT_POS]), 0) - llGetRootPosition();
-        messageTo(ring_id, "teleport", [(string)agent, type, target, (string)pos , (string)lookAt]); //* send mesage to incoming
+        agent = llList2Key(avatars_list, 0);
+        ring = llList2Key(ring_list, 0);
+        //llOwnerSay("tp:"+llKey2Name(agent) +" -> "+ llKey2Name(ring));
+        ring_list = llDeleteSubList(ring_list, 0, 0);
+        avatars_list = llDeleteSubList(avatars_list, 0, 0);
+        teleport(n, ring, agent);
     }
+    llSetTimerEvent(ring_total_time - 1); //* we ate 1 second with sleep above
 }
 
 vector old_face_color;
+
+startEffects()
+{
+    llSetLinkPrimitiveParams(nInternalRing, [PRIM_OMEGA, llRot2Up(llGetLocalRot()), PI, 1.0]);
+    old_face_color = llGetColor(glow_face);
+    llSetPrimitiveParams([PRIM_COLOR, glow_face, <255, 255, 255>, 1, PRIM_GLOW, glow_face, 0.20, PRIM_FULLBRIGHT, glow_face, TRUE]); //* glow face
+}
 
 endEffects()
 {
@@ -175,31 +200,32 @@ finish()
     llSetTimerEvent(ring_idle_time);
 }
 
-startEffects()
-{
-    llSetLinkPrimitiveParams(nInternalRing, [PRIM_OMEGA, llRot2Up(llGetLocalRot()), PI, 1.0]);
-    old_face_color = llGetColor(glow_face);
-    llSetPrimitiveParams([PRIM_COLOR, glow_face, <255, 255, 255>, 1, PRIM_GLOW, glow_face, 0.20, PRIM_FULLBRIGHT, glow_face, TRUE]); //* glow face
-}
+list ring_list = [];
+integer ring_count = 0; //* real rings count want to rez
 
-start(integer agents_count)
+rez_rings(integer agents_count, integer fake)
 {
+    //llOwnerSay("agents_count:" +(string)agents_count);
     started = TRUE;
+    ring_count = agents_count;
+    if (ring_count < min_ring_count)
+        ring_count = min_ring_count;
     startEffects();
     sound();
+
     vector pos = llGetPos() - <0,0,0.1>;
     integer ringNumber;
+    integer n;
     for (ringNumber = 1; ringNumber <= ring_count; ringNumber++)
     {
         llSleep(ring_total_time / 10);
-        integer n;
-        if (ringNumber > agents_count)
-            n = -ringNumber;
-        else
-            n = ringNumber;
+        //llOwnerSay("number:" +(string)ringNumber);
+        n = (ring_count << 8) + ringNumber;
+        if (fake)
+            n = -n;
+        //llOwnerSay("--------->number sent:" +(string)n);
         llRezObject("Ring", pos, ZERO_VECTOR, ZERO_ROTATION, n);
     }
-    llSetTimerEvent(ring_total_time);
 }
 
 clear(){
@@ -257,6 +283,13 @@ addGate(key id)
     }
 }
 
+clean()
+{
+    avatars_list = [];
+    ring_list = [];
+    ring_count = 0;
+}
+
 default
 {
     state_entry()
@@ -307,19 +340,26 @@ default
     {
         if (number_detected > 0)
         {
+            //llOwnerSay("number_detected:" +(string)number_detected);
             integer i;
-            avatars_list = [];
+            clean();
             for( i = 0; i < number_detected; i++ ){
                 key k = llDetectedKey(i);
-                avatars_list += k;
+                if(llDetectedType(i) & AGENT){
+                    //llOwnerSay("k="+llKey2Name(k));
+                    avatars_list += k;
+                }
             }
 
-            if (llList2String(targets_type_list, dest_index) == "gate")
-                sendCommandTo(llList2Key(targets_list, dest_index), "activate", []); //* send mesage to incoming
-            start(number_detected);
+            if (llGetListLength(avatars_list)>0)
+            {
+                if (llList2String(targets_type_list, dest_index) == "gate")
+                    sendCommandTo(llList2Key(targets_list, dest_index), "activate", [(string)avatars_list]); //* send mesage to incoming
+                rez_rings(llGetListLength(avatars_list), FALSE);
+                return;
+            }
         }
-        else
-            llSay(0, "Nothing to teleport");
+        llSay(0, "Nothing to teleport");
     }
 
     no_sensor()
@@ -334,9 +374,15 @@ default
         {
             if (llGetListLength(avatars_list)>0)
             {
-                key agent = llList2Key(avatars_list, 0);
-                avatars_list = llDeleteSubList(avatars_list, 0, 0);
-                teleport(id, agent);
+                //llOwnerSay("object_rez");
+                ring_list += [id];
+                //key agent = llList2Key(avatars_list, 0);
+                //avatars_list = llDeleteSubList(avatars_list, 0, 0);
+                //llOwnerSay("tp:"+llKey2Name(agent));
+                //teleport(id, agent);
+                //llOwnerSay("ring_count:"+(string)ring_count+" / " +(string)llGetListLength(ring_list));
+                if (llGetListLength(ring_list) == ring_count)
+                    teleport_all();
             }
         }
     }
@@ -365,7 +411,8 @@ default
                 if (llListFindList(regionAgents, [agent])<0)
                 {
                     regionAgents = llGetAgentList(AGENT_LIST_REGION, []);
-                    start(0);
+                    clean();
+                    rez_rings(min_ring_count, TRUE);
                 }
             }
         }
@@ -509,7 +556,9 @@ default
                 if (id != llGetKey())
                 { //*not self s
                     dest_index = -1;
-                    start(0);
+                    integer number = llList2Integer(params, 0);
+                    clean();
+                    rez_rings(number, TRUE);
                 }
             }
         }
